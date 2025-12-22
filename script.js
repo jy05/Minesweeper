@@ -202,6 +202,7 @@ function renderGrid() {
             cell.addEventListener('mousedown', handleMouseDown);
             cell.addEventListener('mouseup', handleMouseUp);
             cell.addEventListener('contextmenu', handleRightClick);
+            cell.addEventListener('auxclick', handleAuxClick);
             
             // Touch events for mobile
             cell.addEventListener('touchstart', handleTouchStart);
@@ -243,6 +244,7 @@ function updateCell(row, col) {
 // Mouse/Touch event handlers
 let touchTimer = null;
 let touchStart = null;
+let mouseDownButtons = 0;
 
 function handleTouchStart(e) {
     e.preventDefault();
@@ -281,12 +283,28 @@ function handleMouseDown(e) {
     
     if (gameOver) return;
     
+    mouseDownButtons = e.buttons;
+    
     const row = parseInt(e.target.dataset.row);
     const col = parseInt(e.target.dataset.col);
     
-    // Middle click or both buttons for chording
-    if (e.button === 1 || (e.buttons === 3)) {
+    // Both mouse buttons pressed (left + right)
+    if (e.buttons === 3) {
         e.preventDefault();
+        handleChord(row, col);
+    }
+}
+
+function handleAuxClick(e) {
+    e.preventDefault();
+    
+    if (gameOver) return;
+    
+    const row = parseInt(e.target.dataset.row);
+    const col = parseInt(e.target.dataset.col);
+    
+    // Middle click (button 1) for chording
+    if (e.button === 1) {
         handleChord(row, col);
     }
 }
