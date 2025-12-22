@@ -117,7 +117,7 @@ function initGame(difficulty = 'easy') {
     
     createGrid();
     renderGrid();
-    updateFace('😊');
+    updateFace('new');
 }
 
 // Create grid structure
@@ -579,8 +579,17 @@ function updateCounters() {
     hintCount.textContent = hints;
 }
 
-function updateFace(emoji) {
-    faceButton.textContent = emoji;
+function updateFace(state) {
+    if (state === '😎' || state === 'win') {
+        faceButton.textContent = 'You Won! 🎉';
+        faceButton.style.background = 'linear-gradient(145deg, #4CAF50, #45a049)';
+    } else if (state === '😵' || state === 'lose') {
+        faceButton.textContent = 'Game Over 💣';
+        faceButton.style.background = 'linear-gradient(145deg, #f44336, #da190b)';
+    } else {
+        faceButton.textContent = 'New Game';
+        faceButton.style.background = 'linear-gradient(145deg, #667eea, #764ba2)';
+    }
 }
 
 // Initialize DOM and start game
