@@ -583,55 +583,6 @@ function updateFace(emoji) {
     faceButton.textContent = emoji;
 }
 
-// Event listeners
-faceButton.addEventListener('click', () => {
-    const activeDifficulty = document.querySelector('.diff-btn.active').dataset.difficulty;
-    initGame(activeDifficulty);
-});
-
-hintButton.addEventListener('click', () => {
-    if (hints > 0 && !gameOver && gameStarted) {
-        useHint();
-    }
-});
-
-soundToggle.addEventListener('change', (e) => {
-    soundEnabled = e.target.checked;
-});
-
-difficultyButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        difficultyButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        initGame(btn.dataset.difficulty);
-    });
-});
-faceButton.addEventListener('click', () => {
-    const activeDifficulty = document.querySelector('.diff-btn.active').dataset.difficulty;
-    initGame(activeDifficulty);
-});
-
-hintButton.addEventListener('click', () => {
-    if (hints > 0 && !gameOver && gameStarted) {
-        useHint();
-    }
-});
-
-soundToggle.addEventListener('change', (e) => {
-    soundEnabled = e.target.checked;
-});
-
-difficultyButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        difficultyButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        initGame(btn.dataset.difficulty);
-    });
-});
-
-// Prevent context menu on game board
-gameBoard.addEventListener('contextmenu', (e) => e.preventDefault());
-
 // Initialize DOM and start game
 function initializeGame() {
     gameBoard = document.getElementById('gameBoard');
