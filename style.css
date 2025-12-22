@@ -1,0 +1,348 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-x: hidden;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 30px;
+    max-width: 100%;
+}
+
+header h1 {
+    text-align: center;
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.game-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.info-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.counter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2em;
+}
+
+.counter .label {
+    font-size: 1.5em;
+}
+
+.counter .value {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #ff0000;
+    background: #000;
+    padding: 5px 10px;
+    border-radius: 5px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.face-button {
+    font-size: 2em;
+    background: linear-gradient(145deg, #ffffff, #e6e6e6);
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.face-button:hover {
+    transform: scale(1.1);
+}
+
+.face-button:active {
+    transform: scale(0.95);
+}
+
+.power-ups {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.hint-button {
+    background: linear-gradient(145deg, #ffd700, #ffed4e);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+    font-weight: bold;
+    color: #333;
+}
+
+.hint-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(255, 215, 0, 0.6);
+}
+
+.hint-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.hint-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.hint-button.active {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.difficulty-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.diff-btn {
+    padding: 10px 20px;
+    border: 2px solid #667eea;
+    background: white;
+    color: #667eea;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.diff-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.diff-btn.active {
+    background: #667eea;
+    color: white;
+}
+
+.game-board {
+    display: inline-grid;
+    gap: 2px;
+    background: #999;
+    padding: 4px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin: 0 auto;
+}
+
+.container > div:has(.game-board) {
+    display: flex;
+    justify-content: center;
+}
+
+.cell {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(145deg, #c0c0c0, #a0a0a0);
+    border: 3px outset #d0d0d0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.1s;
+    position: relative;
+}
+
+.cell:hover:not(.revealed):not(.flagged) {
+    filter: brightness(1.1);
+    transform: scale(1.05);
+}
+
+.cell:active:not(.revealed) {
+    transform: scale(0.95);
+}
+
+.cell.revealed {
+    background: #e0e0e0;
+    border: 1px solid #999;
+    cursor: default;
+}
+
+.cell.flagged::after {
+    content: '🚩';
+    font-size: 1.2em;
+}
+
+.cell.mine {
+    background: #ff4444;
+}
+
+.cell.mine::after {
+    content: '💣';
+    font-size: 1.2em;
+}
+
+.cell.hint-glow {
+    animation: hintGlow 0.5s ease-in-out;
+}
+
+@keyframes hintGlow {
+    0%, 100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 1); }
+}
+
+/* Number colors */
+.cell[data-count="1"] { color: #0000ff; }
+.cell[data-count="2"] { color: #008000; }
+.cell[data-count="3"] { color: #ff0000; }
+.cell[data-count="4"] { color: #000080; }
+.cell[data-count="5"] { color: #800000; }
+.cell[data-count="6"] { color: #008080; }
+.cell[data-count="7"] { color: #000000; }
+.cell[data-count="8"] { color: #808080; }
+
+.settings {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.sound-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 1.1em;
+}
+
+.sound-toggle input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.particle-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.particle {
+    position: absolute;
+    pointer-events: none;
+    animation: particleFall 1s ease-out forwards;
+}
+
+@keyframes particleFall {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100px) scale(0);
+        opacity: 0;
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 15px;
+    }
+    
+    header h1 {
+        font-size: 1.8em;
+    }
+    
+    .cell {
+        width: 25px;
+        height: 25px;
+        font-size: 0.9em;
+    }
+    
+    .difficulty-buttons {
+        flex-direction: column;
+    }
+    
+    .diff-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .cell {
+        width: 22px;
+        height: 22px;
+        font-size: 0.8em;
+    }
+    
+    .counter {
+        font-size: 1em;
+    }
+    
+    .face-button {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5em;
+    }
+}
+
+/* Animation for game win */
+@keyframes winShake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+}
+
+.game-board.win {
+    animation: winShake 0.5s ease-in-out 3;
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Minesweeper Deluxe</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💣 Minesweeper Deluxe</h1>
+        </header>
+        
+        <div class="game-info">
+            <div class="info-panel">
+                <div class="counter">
+                    <span class="label">💣</span>
+                    <span class="value" id="mineCounter">010</span>
+                </div>
+                
+                <button class="face-button" id="faceButton">😊</button>
+                
+                <div class="counter">
+                    <span class="label">⏱️</span>
+                    <span class="value" id="timeCounter">000</span>
+                </div>
+            </div>
+            
+            <div class="power-ups">
+                <button class="hint-button" id="hintButton" title="Reveal a safe cell (3 remaining)">
+                    💡 <span id="hintCount">3</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="difficulty-buttons">
+            <button class="diff-btn active" data-difficulty="easy">Easy (9x9)</button>
+            <button class="diff-btn" data-difficulty="medium">Medium (16x16)</button>
+            <button class="diff-btn" data-difficulty="hard">Hard (30x16)</button>
+        </div>
+        
+        <div style="display: flex; justify-content: center;">
+            <div class="game-board" id="gameBoard"></div>
+        </div>
+        
+        <div class="settings">
+            <label class="sound-toggle">
+                <input type="checkbox" id="soundToggle" checked>
+                <span>🔊 Sound Effects</span>
+            </label>
+        </div>
+    </div>
+    
+    <div class="particle-container" id="particleContainer"></div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
