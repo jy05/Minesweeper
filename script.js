@@ -10,7 +10,6 @@ let gameStarted = false;
 let timer = 0;
 let timerInterval = null;
 let hints = 3;
-let hintMode = false;
 let soundEnabled = true;
 
 // Difficulty settings
@@ -110,13 +109,11 @@ function initGame(difficulty = 'easy') {
     gameStarted = false;
     timer = 0;
     hints = 3;
-    hintMode = false;
     
     clearInterval(timerInterval);
     
     updateCounters();
     hintButton.disabled = false;
-    hintButton.classList.remove('active');
     
     createGrid();
     renderGrid();
@@ -245,6 +242,7 @@ function updateCell(row, col) {
 let touchTimer = null;
 let touchStart = null;
 let mouseDownButtons = 0;
+let chordingActive = false;
 
 function handleTouchStart(e) {
     e.preventDefault();
@@ -284,6 +282,7 @@ function handleMouseDown(e) {
     if (gameOver) return;
     
     mouseDownButtons = e.buttons;
+    chordingActive = false;
     
     const row = parseInt(e.target.dataset.row);
     const col = parseInt(e.target.dataset.col);
@@ -291,7 +290,9 @@ function handleMouseDown(e) {
     // Both mouse buttons pressed (left + right)
     if (e.buttons === 3) {
         e.preventDefault();
+        chordingActive = true;
         handleChord(row, col);
+        return;
     }
 }
 
@@ -310,22 +311,27 @@ function handleAuxClick(e) {
 }
 
 function handleMouseUp(e) {
-    if (e.button !== 0 || gameOver) return;
+    if (gameOver) return;
+    
+    // Don't process mouseup if we just did a chord with both buttons
+    if (chordingActive) {
+        chordingActive = false;
+        return;
+    }
+    
+    if (e.button !== 0) return;
     
     const row = parseInt(e.target.dataset.row);
     const col = parseInt(e.target.dataset.col);
     
-    if (hintMode) {
-        useHint(row, col);
-    } else {
-        handleReveal(row, col);
-    }
+    handleReveal(row, col);
 }
 
 function handleRightClick(e) {
     e.preventDefault();
     
-    if (gameOver) return;
+    // Don't flag if we're chording
+    if (gameOver || chordingActive) return;
     
     const row = parseInt(e.target.dataset.row);
     const col = parseInt(e.target.dataset.col);
@@ -454,11 +460,8 @@ function revealAllMines() {
 }
 
 // Hint feature (surprise gameplay element)
-function useHint(row, col) {
-    hintMode = false;
-    hintButton.classList.remove('active');
-    
-    if (hints <= 0 || gameOver) return;
+function useHint() {
+    if (hints <= 0 || gameOver || !gameStarted) return;
     
     // Find a safe, unrevealed, unflagged cell
     let safeCells = [];
@@ -588,12 +591,7 @@ faceButton.addEventListener('click', () => {
 
 hintButton.addEventListener('click', () => {
     if (hints > 0 && !gameOver && gameStarted) {
-        hintMode = !hintMode;
-        hintButton.classList.toggle('active');
-        
-        if (hintMode) {
-            soundSystem.hint();
-        }
+        useHint();
     }
 });
 

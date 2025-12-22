@@ -123,15 +123,6 @@ header h1 {
     cursor: not-allowed;
 }
 
-.hint-button.active {
-    animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
 .difficulty-buttons {
     display: flex;
     gap: 10px;
