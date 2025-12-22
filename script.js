@@ -19,16 +19,16 @@ const difficulties = {
     hard: { rows: 16, cols: 30, mines: 99 }
 };
 
-// DOM elements
-const gameBoard = document.getElementById('gameBoard');
-const faceButton = document.getElementById('faceButton');
-const mineCounter = document.getElementById('mineCounter');
-const timeCounter = document.getElementById('timeCounter');
-const hintButton = document.getElementById('hintButton');
-const hintCount = document.getElementById('hintCount');
-const soundToggle = document.getElementById('soundToggle');
-const difficultyButtons = document.querySelectorAll('.diff-btn');
-const particleContainer = document.getElementById('particleContainer');
+// DOM elements - will be initialized when DOM is ready
+let gameBoard;
+let faceButton;
+let mineCounter;
+let timeCounter;
+let hintButton;
+let hintCount;
+let soundToggle;
+let difficultyButtons;
+let particleContainer;
 
 // Sound system using Web Audio API
 class SoundSystem {
@@ -606,9 +606,77 @@ difficultyButtons.forEach(btn => {
         initGame(btn.dataset.difficulty);
     });
 });
+faceButton.addEventListener('click', () => {
+    const activeDifficulty = document.querySelector('.diff-btn.active').dataset.difficulty;
+    initGame(activeDifficulty);
+});
+
+hintButton.addEventListener('click', () => {
+    if (hints > 0 && !gameOver && gameStarted) {
+        useHint();
+    }
+});
+
+soundToggle.addEventListener('change', (e) => {
+    soundEnabled = e.target.checked;
+});
+
+difficultyButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        difficultyButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        initGame(btn.dataset.difficulty);
+    });
+});
 
 // Prevent context menu on game board
 gameBoard.addEventListener('contextmenu', (e) => e.preventDefault());
 
-// Initialize
-initGame('easy');
+// Initialize DOM and start game
+function initializeGame() {
+    gameBoard = document.getElementById('gameBoard');
+    faceButton = document.getElementById('faceButton');
+    mineCounter = document.getElementById('mineCounter');
+    timeCounter = document.getElementById('timeCounter');
+    hintButton = document.getElementById('hintButton');
+    hintCount = document.getElementById('hintCount');
+    soundToggle = document.getElementById('soundToggle');
+    difficultyButtons = document.querySelectorAll('.diff-btn');
+    particleContainer = document.getElementById('particleContainer');
+    
+    // Add event listeners
+    faceButton.addEventListener('click', () => {
+        const activeDifficulty = document.querySelector('.diff-btn.active').dataset.difficulty;
+        initGame(activeDifficulty);
+    });
+    
+    hintButton.addEventListener('click', () => {
+        if (hints > 0 && !gameOver && gameStarted) {
+            useHint();
+        }
+    });
+    
+    soundToggle.addEventListener('change', (e) => {
+        soundEnabled = e.target.checked;
+    });
+    
+    difficultyButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            difficultyButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            initGame(btn.dataset.difficulty);
+        });
+    });
+    
+    gameBoard.addEventListener('contextmenu', (e) => e.preventDefault());
+    
+    // Start the game
+    initGame('easy');
+}
+
+// Wait for DOM to be ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeGame);
+} else {
+    initializeGame();
+}
