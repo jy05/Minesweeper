@@ -213,9 +213,10 @@
             <div class="info-item">Walls: <span class="info-value" id="walls">7</span></div>
             <div class="info-item">Filled: <span class="info-value" id="filled">0%</span></div>
             <div class="info-item">Goal: <span class="info-value" id="goal">75%</span></div>
+            <div class="info-item">Direction: <span class="info-value" id="direction">Horizontal</span></div>
         </div>
 
-        <div class="message" id="message">Click to build walls and capture 75% of the area!</div>
+        <div class="message" id="message">Click to build walls! Right-click or SPACE to switch direction!</div>
 
         <canvas id="gameCanvas" width="700" height="500"></canvas>
 
@@ -250,6 +251,7 @@
         const CELL_SIZE = 2;
         const GRID_WIDTH = canvas.width / CELL_SIZE;
         const GRID_HEIGHT = canvas.height / CELL_SIZE;
+        let wallDirection = 'horizontal'; // Current wall direction
 
         // Initialize grid
         function initGrid() {
@@ -306,6 +308,7 @@
             document.getElementById('lives').textContent = gameState.lives;
             document.getElementById('walls').textContent = gameState.wallsLeft;
             document.getElementById('filled').textContent = gameState.filledArea + '%';
+            document.getElementById('direction').textContent = wallDirection.charAt(0).toUpperCase() + wallDirection.slice(1);
             document.getElementById('goal').textContent = gameState.goalPercent + '%';
         }
 
@@ -419,8 +422,11 @@
             if (checkBallWallCollision(wall)) {
                 gameState.lives--;
                 showMessage('Hit by ball! Lost a life!');
+                updateUI();
                 if (gameState.lives <= 0) {
                     gameOver();
+                    gameState.buildingWall = null;
+                    return;
                 }
             } else {
                 wall.complete = true;
@@ -429,9 +435,13 @@
                 fillAreas();
                 
                 if (gameState.filledArea >= gameState.goalPercent) {
+                    gameState.buildingWall = null;
                     levelComplete();
-                } else if (gameState.wallsLeft <= 0) {
+                    return;
+                } else if (gameState.wallsLeft <= 0 && gameState.filledArea < gameState.goalPercent) {
                     showMessage('No walls left! Try again!');
+                    gameState.buildingWall = null;
+                    updateUI();
                     setTimeout(() => {
                         gameState.lives--;
                         if (gameState.lives <= 0) {
@@ -440,6 +450,9 @@
                             initLevel();
                         }
                     }, 2000);
+                    return;
+                } else {
+                    showMessage(`${gameState.wallsLeft} walls left - ${gameState.filledArea}% filled`);
                 }
             }
             
@@ -535,17 +548,9 @@
 
             // Draw filled areas
             ctx.fillStyle = '#1a0f2e';
-            for (let i = 0; i < GRID_HEIGHT; i++) {
-                for (let j = 0; j < GRID_WIDTH; j++) {
-                    if (gameState.grid[i][j] === 1) {
-                        ctx.fillRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-                    }
-                }
-            }
-
-            // Draw completed walls
-            ctx.strokeStyle = '#9333ea';
-            ctx.lineWidth = 3;
+            for (let i = 0; 4;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#9333ea';
             gameState.walls.forEach(wall => {
                 if (wall.complete) {
                     ctx.beginPath();
@@ -563,7 +568,9 @@
             // Draw building wall
             if (gameState.buildingWall) {
                 ctx.strokeStyle = '#ec4899';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ec4899';
                 ctx.beginPath();
                 const wall = gameState.buildingWall;
                 if (wall.direction === 'horizontal') {
@@ -575,15 +582,20 @@
                 }
                 ctx.stroke();
             }
+            
+            ctx.shadowBlur = 0;
 
-            // Draw balls
+            // Draw balls with glow
             gameState.balls.forEach(ball => {
                 ctx.fillStyle = ball.color;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = ball.color;
                 ctx.beginPath();
                 ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 1;
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 0;
                 ctx.stroke();
             });
         }
@@ -606,10 +618,25 @@
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
+buildWall(wallDirection, x, y);
+        });
 
-            // Determine direction based on position
-            const horizontal = Math.abs(x - canvas.width / 2) > Math.abs(y - canvas.height / 2);
-            buildWall(horizontal ? 'horizontal' : 'vertical', x, y);
+        // Prevent context menu and use right-click to toggle direction
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            wallDirection = wallDirection === 'horizontal' ? 'vertical' : 'horizontal';
+            updateUI();
+            showMessage(`Direction: ${wallDirection.charAt(0).toUpperCase() + wallDirection.slice(1)}`);
+        });
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                wallDirection = wallDirection === 'horizontal' ? 'vertical' : 'horizontal';
+                updateUI();
+                showMessage(`Direction: ${wallDirection.charAt(0).toUpperCase() + wallDirection.slice(1)}`);
+            }
         });
 
         document.getElementById('startBtn').addEventListener('click', startGame);
