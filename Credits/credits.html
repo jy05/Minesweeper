@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credits - Retro Arcade</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .credits-screen {
+            width: 1920px;
+            height: 1080px;
+            background-image: url('../assets/background.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .credits-header {
+            margin-bottom: 40px;
+        }
+
+        .credits-logo {
+            max-width: 500px;
+            height: auto;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+        }
+
+        .credits-container {
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 50px;
+            backdrop-filter: blur(10px);
+            max-width: 1000px;
+            width: 100%;
+            margin-bottom: 30px;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .credits-title {
+            font-size: 56px;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 50px;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.8),
+                         0 0 50px rgba(147, 51, 234, 0.8);
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from {
+                text-shadow: 0 0 30px rgba(255, 255, 255, 0.8),
+                             0 0 50px rgba(147, 51, 234, 0.8);
+            }
+            to {
+                text-shadow: 0 0 40px rgba(255, 255, 255, 1),
+                             0 0 70px rgba(147, 51, 234, 1);
+            }
+        }
+
+        .credits-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+        }
+
+        .credits-section h2 {
+            font-size: 36px;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(147, 51, 234, 0.6);
+            text-align: center;
+        }
+
+        .credit-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .credit-role {
+            font-size: 22px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: bold;
+        }
+
+        .credit-name {
+            font-size: 24px;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+        }
+
+        .thank-you {
+            text-align: center;
+            font-size: 32px;
+            color: #ffffff;
+            margin: 40px 0;
+            padding: 30px;
+            background: rgba(147, 51, 234, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        .tech-stack {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .tech-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px 30px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .version-info {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 18px;
+            margin-top: 30px;
+        }
+
+        .back-button {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8),
+                         0 0 40px rgba(147, 51, 234, 0.6),
+                         0 4px 10px rgba(0, 0, 0, 0.8);
+            padding: 20px 60px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+
+        .back-button:hover {
+            background: rgba(147, 51, 234, 0.4);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(147, 51, 234, 0.5);
+        }
+
+        /* Scrollbar styling */
+        .credits-container::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .credits-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        .credits-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(145deg, #9333ea, #ec4899);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="credits-screen">
+        <div class="credits-header">
+            <img src="../assets/retroarcadelogo.png" alt="Retro Arcade Logo" class="credits-logo">
+        </div>
+
+        <div class="credits-container">
+            <h1 class="credits-title">🎮 Credits 🎮</h1>
+
+            <!-- Development Team -->
+            <div class="credits-section">
+                <h2>👨‍💻 Development Team</h2>
+                <div class="credit-item">
+                    <span class="credit-role">Lead Developer</span>
+                    <span class="credit-name">Your Name Here</span>
+                </div>
+                <div class="credit-item">
+                    <span class="credit-role">Game Design</span>
+                    <span class="credit-name">Your Name Here</span>
+                </div>
+                <div class="credit-item">
+                    <span class="credit-role">UI/UX Design</span>
+                    <span class="credit-name">Your Name Here</span>
+                </div>
+            </div>
+
+            <!-- Art & Audio -->
+            <div class="credits-section">
+                <h2>🎨 Art & Audio</h2>
+                <div class="credit-item">
+                    <span class="credit-role">Graphics & Logo</span>
+                    <span class="credit-name">Your Name Here</span>
+                </div>
+                <div class="credit-item">
+                    <span class="credit-role">Sound Design</span>
+                    <span class="credit-name">TBD</span>
+                </div>
+                <div class="credit-item">
+                    <span class="credit-role">Music</span>
+                    <span class="credit-name">TBD</span>
+                </div>
+            </div>
+
+            <!-- Technology Stack -->
+            <div class="credits-section">
+                <h2>⚙️ Built With</h2>
+                <div class="tech-stack">
+                    <div class="tech-item">HTML5</div>
+                    <div class="tech-item">CSS3</div>
+                    <div class="tech-item">JavaScript</div>
+                    <div class="tech-item">Web Audio API</div>
+                    <div class="tech-item">LocalStorage API</div>
+                </div>
+            </div>
+
+            <!-- Special Thanks -->
+            <div class="credits-section">
+                <h2>💝 Special Thanks</h2>
+                <div class="credit-item">
+                    <span class="credit-role">Inspiration</span>
+                    <span class="credit-name">Classic Arcade Games</span>
+                </div>
+                <div class="credit-item">
+                    <span class="credit-role">Testing</span>
+                    <span class="credit-name">Community Testers</span>
+                </div>
+                <div class="credit-item">
+                    <span class="credit-role">Support</span>
+                    <span class="credit-name">Friends & Family</span>
+                </div>
+            </div>
+
+            <div class="thank-you">
+                ✨ Thank you for playing! ✨<br>
+                <small style="font-size: 24px;">Stay tuned for more retro games!</small>
+            </div>
+
+            <div class="version-info">
+                Retro Arcade Collection v1.0.0<br>
+                © 2025 - Made with ❤️ for retro gaming enthusiasts
+            </div>
+        </div>
+
+        <div class="back-button" onclick="window.location.href='../index.html'">
+            ← Back to Main Menu
+        </div>
+    </div>
+</body>
+</html>

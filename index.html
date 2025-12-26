@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Minesweeper Deluxe</title>
+    <title>Retro Arcade - Main Menu</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,154 +31,28 @@
         </div>
     </div>
 
-    <!-- Welcome Screen -->
-    <div class="welcome-screen hidden" id="welcomeScreen">
-        <div class="welcome-container">
-            <h1>💣 Minesweeper Deluxe</h1>
-            
-            <div class="player-info">
-                <label for="playerName">Player Name:</label>
-                <input type="text" id="playerName" maxlength="20" placeholder="Enter your name">
+    <script>
+        // Handle menu navigation
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const menu = item.dataset.menu;
                 
-                <label for="playerInitials">Initials (3 letters):</label>
-                <input type="text" id="playerInitials" maxlength="3" placeholder="ABC" style="text-transform: uppercase;">
-            </div>
-            
-            <div class="game-mode-selection">
-                <h2>Select Game Mode</h2>
-                
-                <div class="mode-card" data-mode="classic">
-                    <h3>🎮 Classic Mode</h3>
-                    <p>Traditional Minesweeper - Clear the board at your own pace</p>
-                    <button class="mode-btn">Play Classic</button>
-                </div>
-                
-                <div class="mode-card" data-mode="timeattack">
-                    <h3>⚡ Time Attack Mode</h3>
-                    <p>Race against the clock to clear the board!</p>
-                    <div class="time-attack-settings">
-                        <label>Time Limit: <span id="timeAttackDisplay">60</span>s</label>
-                        <input type="range" id="timeAttackSlider" min="30" max="300" value="60" step="30">
-                    </div>
-                    <button class="mode-btn">Play Time Attack</button>
-                </div>
-            </div>
-            
-            <div class="difficulty-selection">
-                <h2>Difficulty Settings</h2>
-                
-                <div class="diff-option">
-                    <label>
-                        <input type="radio" name="difficulty" value="easy" checked>
-                        <span>Easy (9×9)</span>
-                    </label>
-                    <div class="mines-setting">
-                        <label>Mines: <span id="easyMinesDisplay">10</span></label>
-                        <input type="range" id="easyMinesSlider" min="5" max="20" value="10">
-                    </div>
-                </div>
-                
-                <div class="diff-option">
-                    <label>
-                        <input type="radio" name="difficulty" value="medium">
-                        <span>Medium (16×16)</span>
-                    </label>
-                    <div class="mines-setting">
-                        <label>Mines: <span id="mediumMinesDisplay">40</span></label>
-                        <input type="range" id="mediumMinesSlider" min="20" max="80" value="40">
-                    </div>
-                </div>
-                
-                <div class="diff-option">
-                    <label>
-                        <input type="radio" name="difficulty" value="hard">
-                        <span>Hard (16×30)</span>
-                    </label>
-                    <div class="mines-setting">
-                        <label>Mines: <span id="hardMinesDisplay">99</span></label>
-                        <input type="range" id="hardMinesSlider" min="50" max="150" value="99">
-                    </div>
-                </div>
-            </div>
-            
-            <button class="view-scores-btn" id="viewScoresBtn">🏆 View High Scores</button>
-        </div>
-    </div>
-    
-    <!-- High Scores Screen -->
-    <div class="highscores-screen hidden" id="highscoresScreen">
-        <div class="highscores-container">
-            <h1>🏆 High Scores</h1>
-            
-            <div class="scores-tabs">
-                <button class="tab-btn active" data-mode="classic">Classic</button>
-                <button class="tab-btn" data-mode="timeattack">Time Attack</button>
-            </div>
-            
-            <div class="scores-difficulty-tabs">
-                <button class="diff-tab-btn active" data-difficulty="easy">Easy</button>
-                <button class="diff-tab-btn" data-difficulty="medium">Medium</button>
-                <button class="diff-tab-btn" data-difficulty="hard">Hard</button>
-            </div>
-            
-            <div class="scores-list" id="scoresList">
-                <!-- Scores will be populated here -->
-            </div>
-            
-            <button class="back-btn" id="backToMenuBtn">← Back to Menu</button>
-        </div>
-    </div>
-    
-    <!-- Game Screen -->
-    <div class="game-screen hidden" id="gameScreen">
-        <div class="container">
-            <header>
-                <h1>💣 Minesweeper Deluxe</h1>
-                <div class="player-display">
-                    <span id="currentPlayerName"></span>
-                </div>
-            </header>
-            
-            <div class="game-info">
-                <div class="info-panel">
-                    <div class="counter">
-                        <span class="label">💣</span>
-                        <span class="value" id="mineCounter">010</span>
-                    </div>
-                    
-                    <button class="face-button" id="faceButton">New Game</button>
-                    
-                    <div class="counter">
-                        <span class="label" id="timerLabel">⏱️</span>
-                        <span class="value" id="timeCounter">000</span>
-                    </div>
-                </div>
-                
-                <div class="mode-indicator" id="modeIndicator"></div>
-                
-                <div class="power-ups">
-                    <button class="hint-button" id="hintButton" title="Reveal a safe cell (3 remaining)">
-                        💡 <span id="hintCount">3</span>
-                    </button>
-                </div>
-            </div>
-            
-            <div style="display: flex; justify-content: center;">
-                <div class="game-board" id="gameBoard"></div>
-            </div>
-            
-            <div class="settings">
-                <label class="sound-toggle">
-                    <input type="checkbox" id="soundToggle" checked>
-                    <span>🔊 Sound Effects</span>
-                </label>
-                <button class="menu-btn" id="backToMenuGameBtn">📋 Menu</button>
-            </div>
-        </div>
-    </div>
-    
-    <div class="particle-container" id="particleContainer"></div>
-    
-    <script src="script.js"></script>
+                switch(menu) {
+                    case 'games':
+                        window.location.href = 'Games/games.html';
+                        break;
+                    case 'jukebox':
+                        window.location.href = 'Jukebox/jukebox.html';
+                        break;
+                    case 'settings':
+                        window.location.href = 'Settings/settings.html';
+                        break;
+                    case 'credits':
+                        window.location.href = 'Credits/credits.html';
+                        break;
+                }
+            });
+        });
+    </script>
 </body>
 </html>
