@@ -6,13 +6,101 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-image: url('../../assets/background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
     overflow-x: hidden;
+    position: relative;
+}
+
+/* Music Controls */
+.music-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 3px solid #9333ea;
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
+}
+
+.volume-control-game {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.volume-icon {
+    font-size: 20px;
+}
+
+.volume-slider-game {
+    width: 120px;
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #0a0515;
+    border: 2px solid #4a148c;
+    border-radius: 0;
+    outline: none;
+}
+
+.volume-slider-game::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 0;
+    background: #9333ea;
+    cursor: pointer;
+    border: 2px solid #ec4899;
+}
+
+.volume-slider-game::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 0;
+    background: #9333ea;
+    cursor: pointer;
+    border: 2px solid #ec4899;
+}
+
+.volume-percent {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: #9333ea;
+    min-width: 35px;
+}
+
+.mute-toggle {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    padding: 8px 12px;
+    background: linear-gradient(180deg, #9333ea 0%, #6b21a8 100%);
+    border: 2px solid #4a148c;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mute-toggle:hover {
+    background: linear-gradient(180deg, #ec4899 0%, #9333ea 100%);
+}
+
+.mute-toggle:active {
+    transform: scale(0.95);
 }
 
 /* Welcome Screen */
@@ -28,88 +116,128 @@ body {
 }
 
 .welcome-container, .highscores-container {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    padding: 40px;
+    background: linear-gradient(145deg, rgba(30, 20, 60, 0.95), rgba(50, 30, 80, 0.95));
+    border: 4px solid #9333ea;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(147, 51, 234, 0.4),
+                inset 0 0 20px rgba(0, 0, 0, 0.3);
+    padding: 30px;
     max-width: 800px;
     width: 100%;
 }
 
 .welcome-container h1, .highscores-container h1 {
+    font-family: 'Press Start 2P', cursive;
     text-align: center;
-    color: #667eea;
-    margin-bottom: 30px;
-    font-size: 2.5em;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    color: #ffffff;
+    margin-bottom: 25px;
+    font-size: 24px;
+    text-shadow: 3px 3px 0 rgba(147, 51, 234, 0.8),
+                 0 0 20px rgba(255, 255, 255, 0.5);
+    line-height: 1.6;
 }
 
 .player-info {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
     padding: 20px;
-    background: #f5f5f5;
-    border-radius: 10px;
+    background: rgba(26, 15, 46, 0.8);
+    border: 2px solid #4a148c;
+    border-radius: 8px;
 }
 
 .player-info label {
-    font-weight: bold;
-    color: #333;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: #9333ea;
+    margin-bottom: 5px;
 }
 
 .player-info input {
-    padding: 10px;
-    border: 2px solid #667eea;
-    border-radius: 5px;
-    font-size: 1em;
+    padding: 12px;
+    border: 2px solid #4a148c;
+    background: #0a0515;
+    color: #ffffff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    border-radius: 0;
+    outline: none;
+}
+
+.player-info input:focus {
+    border-color: #9333ea;
+    box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
 }
 
 .game-mode-selection {
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
 
 .game-mode-selection h2, .difficulty-selection h2 {
-    color: #667eea;
+    font-family: 'Press Start 2P', cursive;
+    color: #ec4899;
     margin-bottom: 20px;
     text-align: center;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .mode-card {
-    background: linear-gradient(145deg, #f5f5f5, #e0e0e0);
+    background: rgba(147, 51, 234, 0.2);
+    border: 2px solid #4a148c;
     padding: 20px;
-    border-radius: 15px;
+    border-radius: 0;
     margin-bottom: 15px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.mode-card:hover {
+    background: rgba(147, 51, 234, 0.3);
+    border-color: #9333ea;
 }
 
 .mode-card h3 {
-    color: #667eea;
-    margin-bottom: 10px;
+    font-family: 'Press Start 2P', cursive;
+    color: #ffffff;
+    margin-bottom: 12px;
+    font-size: 12px;
+    line-height: 1.6;
 }
 
 .mode-card p {
-    color: #666;
+    color: rgba(255, 255, 255, 0.8);
     margin-bottom: 15px;
+    font-size: 13px;
 }
 
 .mode-btn {
     width: 100%;
     padding: 12px;
-    background: linear-gradient(145deg, #667eea, #764ba2);
+    background: linear-gradient(180deg, #9333ea 0%, #6b21a8 100%);
     color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1em;
-    font-weight: bold;
+    border: 3px solid #4a148c;
+    border-bottom: 4px solid #1a0f2e;
+    border-right: 4px solid #1a0f2e;
+    border-radius: 0;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.1s ease;
+    box-shadow: 0 4px 0 #1a0f2e,
+                0 0 15px rgba(147, 51, 234, 0.4);
 }
 
 .mode-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 0 #1a0f2e,
+                0 0 20px rgba(147, 51, 234, 0.6);
+}
+
+.mode-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #1a0f2e;
 }
 
 .time-attack-settings {
@@ -127,25 +255,36 @@ body {
 }
 
 .difficulty-selection {
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
 
 .diff-option {
-    background: #f9f9f9;
+    background: rgba(26, 15, 46, 0.8);
+    border: 2px solid #4a148c;
     padding: 15px;
-    border-radius: 10px;
+    border-radius: 0;
     margin-bottom: 10px;
+    transition: all 0.2s ease;
+}
+
+.diff-option:hover {
+    border-color: #9333ea;
+    background: rgba(147, 51, 234, 0.2);
 }
 
 .diff-option label {
     display: flex;
     align-items: center;
     cursor: pointer;
-    font-weight: bold;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: #ffffff;
 }
 
 .diff-option input[type="radio"] {
     margin-right: 10px;
+    width: 16px;
+    height: 16px;
 }
 
 .mines-setting {
@@ -156,7 +295,9 @@ body {
 .mines-setting label {
     display: block;
     margin-bottom: 5px;
-    font-size: 0.9em;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    color: #9333ea;
 }
 
 .mines-setting input[type="range"] {
@@ -166,20 +307,30 @@ body {
 .view-scores-btn, .back-btn {
     width: 100%;
     padding: 15px;
-    background: linear-gradient(145deg, #ffd700, #ffed4e);
-    color: #333;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.2em;
-    font-weight: bold;
+    background: linear-gradient(180deg, #9333ea 0%, #6b21a8 100%);
+    color: white;
+    border: 3px solid #4a148c;
+    border-bottom: 4px solid #1a0f2e;
+    border-right: 4px solid #1a0f2e;
+    border-radius: 0;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.1s ease;
     margin-top: 10px;
+    box-shadow: 0 4px 0 #1a0f2e,
+                0 0 15px rgba(147, 51, 234, 0.4);
 }
 
 .view-scores-btn:hover, .back-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 215, 0, 0.4);
+    box-shadow: 0 6px 0 #1a0f2e,
+                0 0 20px rgba(147, 51, 234, 0.6);
+}
+
+.view-scores-btn:active, .back-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #1a0f2e;
 }
 
 /* High Scores Screen */
@@ -188,103 +339,133 @@ body {
     gap: 10px;
     margin-bottom: 20px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .tab-btn, .diff-tab-btn {
-    padding: 10px 20px;
-    background: #f5f5f5;
-    border: 2px solid #667eea;
-    border-radius: 8px;
+    padding: 10px 15px;
+    background: rgba(26, 15, 46, 0.8);
+    border: 2px solid #4a148c;
+    border-radius: 0;
     cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+    color: #ffffff;
+    transition: all 0.2s ease;
 }
 
 .tab-btn.active, .diff-tab-btn.active {
-    background: #667eea;
-    color: white;
+    background: #9333ea;
+    border-color: #ec4899;
+    box-shadow: 0 0 15px rgba(147, 51, 234, 0.5);
+}
+
+.tab-btn:hover, .diff-tab-btn:hover {
+    border-color: #9333ea;
+    background: rgba(147, 51, 234, 0.3);
 }
 
 .scores-list {
-    background: #f5f5f5;
+    background: rgba(26, 15, 46, 0.8);
+    border: 2px solid #4a148c;
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 0;
     min-height: 300px;
     margin-bottom: 20px;
+    color: #ffffff;
 }
 
 .score-entry {
     display: flex;
     justify-content: space-between;
-    padding: 15px;
-    background: white;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 12px;
+    background: rgba(147, 51, 234, 0.15);
+    border: 2px solid #4a148c;
+    border-radius: 0;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.score-entry:hover {
+    background: rgba(147, 51, 234, 0.3);
+    border-color: #9333ea;
 }
 
 .score-rank {
-    font-weight: bold;
-    color: #667eea;
-    font-size: 1.2em;
+    font-family: 'Press Start 2P', cursive;
+    color: #ec4899;
+    font-size: 12px;
 }
 
 .score-player {
     flex: 1;
     margin-left: 15px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: #ffffff;
 }
 
 .score-time {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    color: #ff0000;
+    font-family: 'Press Start 2P', cursive;
+    color: #9333ea;
+    font-size: 10px;
 }
 
 .no-scores {
     text-align: center;
-    color: #999;
+    color: rgba(255, 255, 255, 0.5);
     padding: 40px;
-    font-size: 1.2em;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    line-height: 1.8;
 }
 
 .container {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    padding: 30px;
+    background: linear-gradient(145deg, rgba(30, 20, 60, 0.95), rgba(50, 30, 80, 0.95));
+    border: 4px solid #9333ea;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(147, 51, 234, 0.4),
+                inset 0 0 20px rgba(0, 0, 0, 0.3);
+    padding: 25px;
     max-width: 100%;
 }
 
 header h1 {
+    font-family: 'Press Start 2P', cursive;
     text-align: center;
-    color: #667eea;
+    color: #ffffff;
     margin-bottom: 20px;
-    font-size: 2.5em;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 20px;
+    text-shadow: 3px 3px 0 rgba(147, 51, 234, 0.8),
+                 0 0 20px rgba(255, 255, 255, 0.5);
+    line-height: 1.6;
 }
 
 .game-info {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 15px;
 }
 
 .info-panel {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #f5f5f5;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: rgba(26, 15, 46, 0.8);
+    border: 2px solid #4a148c;
+    padding: 12px;
+    border-radius: 0;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .counter {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 1.2em;
+    gap: 8px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: #9333ea;
 }
 
 .counter .label {

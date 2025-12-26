@@ -808,6 +808,51 @@ function initializeGame() {
     
     gameBoard.addEventListener('contextmenu', (e) => e.preventDefault());
     
+    // Background Music Controls
+    const gameBgMusic = document.getElementById('gameBgMusic');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeIcon = document.getElementById('volumeIcon');
+    const volumePercent = document.getElementById('volumePercent');
+    const muteToggle = document.getElementById('muteToggle');
+    
+    gameBgMusic.volume = 0.15;
+    let isMusicMuted = false;
+    
+    // Try to start music on page load
+    gameBgMusic.play().catch(() => {
+        // If autoplay is blocked, start on first interaction
+        const startMusic = () => {
+            gameBgMusic.play().catch(e => console.log('Music play failed:', e));
+        };
+        document.addEventListener('click', startMusic, { once: true });
+    });
+    
+    volumeSlider.addEventListener('input', (e) => {
+        const volume = e.target.value / 100;
+        gameBgMusic.volume = volume;
+        volumePercent.textContent = e.target.value + '%';
+        
+        if (volume === 0) {
+            volumeIcon.textContent = '🔇';
+        } else if (volume < 0.5) {
+            volumeIcon.textContent = '🔉';
+        } else {
+            volumeIcon.textContent = '🔊';
+        }
+    });
+    
+    muteToggle.addEventListener('click', () => {
+        if (isMusicMuted) {
+            gameBgMusic.play();
+            muteToggle.textContent = '🔇 Mute';
+            isMusicMuted = false;
+        } else {
+            gameBgMusic.pause();
+            muteToggle.textContent = '🔊 Unmute';
+            isMusicMuted = true;
+        }
+    });
+    
     // Start on welcome screen
     showScreen('welcome');
 }
