@@ -4,27 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Games - Retro Arcade</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
     <style>
         .games-screen {
             width: 100vw;
-            height: 100vh;
+            min-height: 100vh;
             background-image: url('../assets/background.jpg');
             background-size: cover;
             background-position: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 60px 20px;
-            overflow-y: auto;
+            padding: 40px 20px;
         }
 
         .games-header {
-            margin-bottom: 60px;
+            margin-bottom: 40px;
         }
 
         .games-logo {
-            max-width: 450px;
+            max-width: 400px;
             height: auto;
             filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
         }
@@ -32,107 +34,120 @@
         .games-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 40px;
-            max-width: 1200px;
-            margin-bottom: 40px;
+            gap: 25px;
+            max-width: 900px;
+            margin-bottom: 30px;
         }
 
         .game-card {
-            background: rgba(0, 0, 0, 0.5);
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 40px;
+            background: linear-gradient(145deg, rgba(30, 20, 60, 0.95), rgba(50, 30, 80, 0.95));
+            border: 4px solid #9333ea;
+            border-radius: 10px;
+            padding: 30px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
             text-align: center;
+            box-shadow: 0 0 20px rgba(147, 51, 234, 0.3),
+                        inset 0 0 15px rgba(0, 0, 0, 0.3);
         }
 
         .game-card:hover {
-            background: rgba(147, 51, 234, 0.5);
-            border-color: rgba(255, 255, 255, 0.6);
-            transform: scale(1.05);
-            box-shadow: 0 10px 40px rgba(147, 51, 234, 0.6);
+            background: linear-gradient(145deg, rgba(50, 30, 80, 0.95), rgba(70, 40, 100, 0.95));
+            border-color: #ec4899;
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px rgba(147, 51, 234, 0.6),
+                        inset 0 0 15px rgba(0, 0, 0, 0.3),
+                        0 10px 20px rgba(0, 0, 0, 0.4);
         }
 
         .game-card h2 {
-            font-size: 48px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 20px;
             color: #ffffff;
-            margin-bottom: 20px;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8),
-                         0 0 40px rgba(147, 51, 234, 0.6);
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 0 #9333ea,
+                         0 0 15px rgba(255, 255, 255, 0.5);
+            line-height: 1.6;
         }
 
         .game-card p {
-            font-size: 24px;
-            color: rgba(255, 255, 255, 0.9);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
         }
 
         .game-card.disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
         }
 
         .game-card.disabled:hover {
-            background: rgba(0, 0, 0, 0.5);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: linear-gradient(145deg, rgba(30, 20, 60, 0.95), rgba(50, 30, 80, 0.95));
+            border-color: #9333ea;
             transform: none;
-            box-shadow: none;
+            box-shadow: 0 0 20px rgba(147, 51, 234, 0.3),
+                        inset 0 0 15px rgba(0, 0, 0, 0.3);
         }
 
         .back-button {
-            font-size: 36px;
-            font-weight: bold;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
             color: #ffffff;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8),
-                         0 0 40px rgba(147, 51, 234, 0.6),
-                         0 4px 10px rgba(0, 0, 0, 0.8);
-            padding: 20px 60px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 15px;
+            text-shadow: 2px 2px 0 #9333ea;
+            padding: 15px 40px;
+            background: linear-gradient(180deg, #9333ea 0%, #6b21a8 100%);
+            border: 3px solid #4a148c;
+            border-bottom: 4px solid #1a0f2e;
+            border-right: 4px solid #1a0f2e;
+            border-radius: 0;
             cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
+            transition: all 0.1s ease;
             text-align: center;
+            box-shadow: 0 4px 0 #1a0f2e,
+                        0 0 15px rgba(147, 51, 234, 0.4);
         }
 
         .back-button:hover {
-            background: rgba(147, 51, 234, 0.4);
-            border-color: rgba(255, 255, 255, 0.6);
-            transform: scale(1.05);
-            text-shadow: 0 0 30px rgba(255, 255, 255, 1),
-                         0 0 50px rgba(147, 51, 234, 0.8);
-            box-shadow: 0 10px 40px rgba(147, 51, 234, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #1a0f2e,
+                        0 0 20px rgba(147, 51, 234, 0.6);
+        }
+
+        .back-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1a0f2e;
         }
 
         @media (max-width: 1024px) {
             .games-screen {
-                padding: 40px 20px;
+                padding: 30px 20px;
             }
             
             .games-logo {
-                max-width: 350px;
+                max-width: 320px;
             }
             
             .games-header {
-                margin-bottom: 40px;
+                margin-bottom: 30px;
             }
             
             .games-grid {
                 grid-template-columns: 1fr;
-                gap: 30px;
-                max-width: 600px;
+                gap: 20px;
+                max-width: 500px;
             }
             
             .game-card h2 {
-                font-size: 40px;
+                font-size: 16px;
+            }
+            
+            .game-card p {
+                font-size: 12px;
             }
             
             .back-button {
-                font-size: 28px;
-                padding: 15px 40px;
+                font-size: 12px;
+                padding: 12px 30px;
             }
         }
 
@@ -202,9 +217,9 @@
                 <p>Classic mine-hunting puzzle game</p>
             </div>
 
-            <div class="game-card disabled">
+            <div class="game-card" onclick="window.location.href='Jezzball/jezzball.html'">
                 <h2>🎯 Jezzball</h2>
-                <p>Coming Soon!</p>
+                <p>Capture the bouncing balls</p>
             </div>
 
             <div class="game-card disabled">
