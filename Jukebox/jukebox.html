@@ -386,44 +386,33 @@
 
             <div class="player-display">
                 <div class="now-playing">Now Playing</div>
-                <div class="song-title">No Song Selected</div>
-                <div class="song-artist">Select a song from the playlist</div>
+                <div class="song-title" id="currentTitle">No Song Selected</div>
+                <div class="song-artist" id="currentArtist">Select a song from the playlist</div>
 
-                <div class="progress-bar">
-                    <div class="progress-fill"></div>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
                 </div>
 
                 <div class="time-display">
-                    <span>0:00</span>
-                    <span>0:00</span>
+                    <span id="currentTime">0:00</span>
+                    <span id="totalTime">0:00</span>
                 </div>
             </div>
 
             <div class="player-controls">
-                <div class="control-btn" title="Previous">⏮️</div>
-                <div class="control-btn play" title="Play/Pause">▶️</div>
-                <div class="control-btn" title="Next">⏭️</div>
+                <div class="control-btn" id="prevBtn" title="Previous">⏮️</div>
+                <div class="control-btn play" id="playBtn" title="Play/Pause">▶️</div>
+                <div class="control-btn" id="nextBtn" title="Next">⏭️</div>
             </div>
 
             <div class="volume-control">
                 <span class="volume-icon">🔊</span>
-                <input type="range" class="volume-slider" min="0" max="100" value="70">
-                <span style="color: white; font-weight: bold;">70%</span>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                <span style="color: white; font-weight: bold;" id="volumeValue">70%</span>
             </div>
 
-            <div class="playlist">
-                <div class="placeholder-text">
-                    🎶 Music tracks will be added soon! 🎶<br>
-                    <small style="font-size: 16px;">This jukebox is ready for your retro arcade tunes!</small>
-                </div>
-                <!-- Example playlist items (commented out for now)
-                <div class="playlist-item active">
-                    <div class="song-info">
-                        <div class="song-name">Retro Wave Theme</div>
-                    </div>
-                    <div class="song-duration">3:45</div>
-                </div>
-                -->
+            <div class="playlist" id="playlist">
+                <!-- Playlist will be populated by JavaScript -->
             </div>
         </div>
 
@@ -431,5 +420,148 @@
             ← Back to Main Menu
         </div>
     </div>
+
+    <audio id="audioPlayer"></audio>
+
+    <script>
+        const playlist = [
+            { file: 'ES_A Lil BIT - Rocket Jr.mp3', artist: 'Rocket Jr', title: 'A Lil BIT' },
+            { file: 'ES_Glitching Through the Sky - William Benckert.mp3', artist: 'William Benckert', title: 'Glitching Through the Sky' },
+            { file: 'ES_Power Blast - Xack.mp3', artist: 'Xack', title: 'Power Blast' }
+        ];
+
+        let currentTrack = 0;
+        let isPlaying = false;
+
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playBtn = document.getElementById('playBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeValue = document.getElementById('volumeValue');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const currentTime = document.getElementById('currentTime');
+        const totalTime = document.getElementById('totalTime');
+        const currentTitle = document.getElementById('currentTitle');
+        const currentArtist = document.getElementById('currentArtist');
+        const playlistContainer = document.getElementById('playlist');
+
+        // Load playlist
+        function loadPlaylist() {
+            playlistContainer.innerHTML = '';
+            playlist.forEach((track, index) => {
+                const item = document.createElement('div');
+                item.className = 'playlist-item' + (index === currentTrack ? ' active' : '');
+                item.innerHTML = `
+                    <div class="song-info">
+                        <div class="song-name">${track.artist} - ${track.title}</div>
+                    </div>
+                `;
+                item.onclick = () => selectTrack(index);
+                playlistContainer.appendChild(item);
+            });
+        }
+
+        // Select track
+        function selectTrack(index) {
+            currentTrack = index;
+            loadTrack();
+            updatePlaylistUI();
+            if (isPlaying) {
+                audioPlayer.play();
+            }
+        }
+
+        // Load track
+        function loadTrack() {
+            const track = playlist[currentTrack];
+            audioPlayer.src = `../assets/music/${track.file}`;
+            currentTitle.textContent = track.title;
+            currentArtist.textContent = track.artist;
+        }
+
+        // Update playlist UI
+        function updatePlaylistUI() {
+            document.querySelectorAll('.playlist-item').forEach((item, index) => {
+                item.classList.toggle('active', index === currentTrack);
+            });
+        }
+
+        // Play/Pause
+        playBtn.onclick = () => {
+            if (isPlaying) {
+                audioPlayer.pause();
+                playBtn.textContent = '▶️';
+            } else {
+                if (!audioPlayer.src) {
+                    loadTrack();
+                }
+                audioPlayer.play();
+                playBtn.textContent = '⏸️';
+            }
+            isPlaying = !isPlaying;
+        };
+
+        // Previous track
+        prevBtn.onclick = () => {
+            currentTrack = (currentTrack - 1 + playlist.length) % playlist.length;
+            selectTrack(currentTrack);
+            if (isPlaying) audioPlayer.play();
+        };
+
+        // Next track
+        nextBtn.onclick = () => {
+            currentTrack = (currentTrack + 1) % playlist.length;
+            selectTrack(currentTrack);
+            if (isPlaying) audioPlayer.play();
+        };
+
+        // Volume control
+        volumeSlider.oninput = (e) => {
+            const volume = e.target.value;
+            audioPlayer.volume = volume / 100;
+            volumeValue.textContent = volume + '%';
+        };
+
+        // Progress bar
+        audioPlayer.ontimeupdate = () => {
+            if (audioPlayer.duration) {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressFill.style.width = progress + '%';
+                currentTime.textContent = formatTime(audioPlayer.currentTime);
+                totalTime.textContent = formatTime(audioPlayer.duration);
+            }
+        };
+
+        // Click progress bar to seek
+        progressBar.onclick = (e) => {
+            if (audioPlayer.duration) {
+                const rect = progressBar.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                audioPlayer.currentTime = percent * audioPlayer.duration;
+            }
+        };
+
+        // Auto-play next track
+        audioPlayer.onended = () => {
+            currentTrack = (currentTrack + 1) % playlist.length;
+            selectTrack(currentTrack);
+            audioPlayer.play();
+        };
+
+        // Format time
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Set initial volume
+        audioPlayer.volume = 0.7;
+
+        // Initialize playlist
+        loadPlaylist();
+    </script>
 </body>
 </html>
