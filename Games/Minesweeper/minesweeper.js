@@ -34,6 +34,7 @@ let hintButton, hintCount, soundToggle, particleContainer;
 let welcomeScreen, highscoresScreen, gameScreen;
 let playerNameInput, playerInitialsInput;
 let modeIndicator, currentPlayerNameDisplay;
+let backToGamesBtn;
 
 // Sound system using Web Audio API
 class SoundSystem {
