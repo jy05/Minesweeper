@@ -7,15 +7,16 @@
     <link rel="stylesheet" href="../style.css">
     <style>
         .credits-screen {
-            width: 1920px;
-            height: 1080px;
+            width: 100vw;
+            height: 100vh;
             background-image: url('../assets/background.jpg');
             background-size: cover;
             background-position: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px;
+            padding: 40px 20px;
+            overflow-y: auto;
         }
 
         .credits-header {
@@ -23,7 +24,7 @@
         }
 
         .credits-logo {
-            max-width: 500px;
+            max-width: 400px;
             height: auto;
             filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
         }
@@ -174,6 +175,155 @@
         .credits-container::-webkit-scrollbar-thumb {
             background: linear-gradient(145deg, #9333ea, #ec4899);
             border-radius: 5px;
+        }
+
+        @media (max-width: 1024px) {
+            .credits-logo {
+                max-width: 320px;
+            }
+            
+            .credits-container {
+                max-width: 800px;
+            }
+            
+            .credits-title {
+                font-size: 44px;
+            }
+            
+            .credits-section h2 {
+                font-size: 30px;
+            }
+            
+            .tech-item {
+                font-size: 18px;
+                padding: 12px 24px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .credits-screen {
+                padding: 30px 15px;
+            }
+            
+            .credits-logo {
+                max-width: 280px;
+            }
+            
+            .credits-header {
+                margin-bottom: 30px;
+            }
+            
+            .credits-container {
+                padding: 30px 20px;
+                max-width: 100%;
+                max-height: 600px;
+            }
+            
+            .credits-title {
+                font-size: 36px;
+                margin-bottom: 35px;
+            }
+            
+            .credits-section {
+                margin-bottom: 30px;
+                padding: 20px;
+            }
+            
+            .credits-section h2 {
+                font-size: 26px;
+                margin-bottom: 15px;
+            }
+            
+            .credit-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .credit-role {
+                font-size: 18px;
+            }
+            
+            .credit-name {
+                font-size: 20px;
+            }
+            
+            .thank-you {
+                font-size: 26px;
+                padding: 25px;
+                margin: 30px 0;
+            }
+            
+            .tech-stack {
+                gap: 15px;
+            }
+            
+            .tech-item {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+            
+            .version-info {
+                font-size: 16px;
+            }
+            
+            .back-button {
+                font-size: 28px;
+                padding: 15px 40px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .credits-logo {
+                max-width: 220px;
+            }
+            
+            .credits-container {
+                padding: 20px 15px;
+                max-height: 500px;
+            }
+            
+            .credits-title {
+                font-size: 28px;
+                margin-bottom: 30px;
+            }
+            
+            .credits-section {
+                margin-bottom: 25px;
+                padding: 15px;
+            }
+            
+            .credits-section h2 {
+                font-size: 22px;
+            }
+            
+            .credit-role {
+                font-size: 16px;
+            }
+            
+            .credit-name {
+                font-size: 18px;
+            }
+            
+            .thank-you {
+                font-size: 22px;
+                padding: 20px;
+            }
+            
+            .tech-item {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+            
+            .version-info {
+                font-size: 14px;
+                margin-top: 20px;
+            }
+            
+            .back-button {
+                font-size: 24px;
+                padding: 12px 30px;
+            }
         }
     </style>
 </head>
