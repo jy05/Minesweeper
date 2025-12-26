@@ -766,6 +766,10 @@ function initializeGame() {
         showScreen('welcome');
     });
     
+    document.getElementById('backToGamesBtn').addEventListener('click', () => {
+        window.location.href = '../games.html';
+    });
+    
     // High scores tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {

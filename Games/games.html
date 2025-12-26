@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games - Retro Arcade</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .games-screen {
+            width: 1920px;
+            height: 1080px;
+            background-image: url('../assets/background.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 0;
+        }
+
+        .games-header {
+            margin-bottom: 60px;
+        }
+
+        .games-logo {
+            max-width: 600px;
+            height: auto;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            max-width: 1200px;
+            margin-bottom: 40px;
+        }
+
+        .game-card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .game-card:hover {
+            background: rgba(147, 51, 234, 0.5);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(147, 51, 234, 0.6);
+        }
+
+        .game-card h2 {
+            font-size: 48px;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8),
+                         0 0 40px rgba(147, 51, 234, 0.6);
+        }
+
+        .game-card p {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .game-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .game-card.disabled:hover {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .back-button {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8),
+                         0 0 40px rgba(147, 51, 234, 0.6),
+                         0 4px 10px rgba(0, 0, 0, 0.8);
+            padding: 20px 60px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+
+        .back-button:hover {
+            background: rgba(147, 51, 234, 0.4);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.05);
+            text-shadow: 0 0 30px rgba(255, 255, 255, 1),
+                         0 0 50px rgba(147, 51, 234, 0.8);
+            box-shadow: 0 10px 40px rgba(147, 51, 234, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="games-screen">
+        <div class="games-header">
+            <img src="../assets/retroarcadelogo.png" alt="Retro Arcade Logo" class="games-logo">
+        </div>
+
+        <div class="games-grid">
+            <div class="game-card" onclick="window.location.href='Minesweeper/minesweeper.html'">
+                <h2>💣 Minesweeper</h2>
+                <p>Classic mine-hunting puzzle game</p>
+            </div>
+
+            <div class="game-card disabled">
+                <h2>🎯 Jezzball</h2>
+                <p>Coming Soon!</p>
+            </div>
+
+            <div class="game-card disabled">
+                <h2>🔷 Tetrix</h2>
+                <p>Coming Soon!</p>
+            </div>
+
+            <div class="game-card disabled">
+                <h2>🎮 More Games</h2>
+                <p>Coming Soon!</p>
+            </div>
+        </div>
+
+        <div class="back-button" onclick="window.location.href='../index.html'">
+            ← Back to Main Menu
+        </div>
+    </div>
+</body>
+</html>
