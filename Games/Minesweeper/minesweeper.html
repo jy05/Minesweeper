@@ -4,9 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Minesweeper Deluxe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="minesweeper.css">
 </head>
 <body>
+    <!-- Background Music -->
+    <audio id="gameBgMusic" loop>
+        <source src="../../assets/music/Vibe Check - 8it8oy.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Music Controls -->
+    <div class="music-controls">
+        <div class="volume-control-game">
+            <span class="volume-icon" id="volumeIcon">🔊</span>
+            <input type="range" id="volumeSlider" class="volume-slider-game" min="0" max="100" value="15">
+            <span class="volume-percent" id="volumePercent">15%</span>
+        </div>
+        <button class="mute-toggle" id="muteToggle">🔇 Mute</button>
+    </div>
+
     <!-- Welcome Screen -->
     <div class="welcome-screen" id="welcomeScreen">
         <div class="welcome-container">
