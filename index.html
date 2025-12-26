@@ -4,17 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Retro Arcade - Main Menu</title>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=6">
     <style>
-        /* Force override for testing */
-        .logo-container {
-            margin-bottom: 280px !important;
+        .mute-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+        
+        .mute-button:hover {
+            background: rgba(147, 51, 234, 0.6);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.1);
         }
     </style>
 </head>
 <body>
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
+        <!-- Twinkling Stars -->
+        <img src="assets/staryellow.png" class="star star-1" alt="">
+        <img src="assets/starblue.png" class="star star-2" alt="">
+        <img src="assets/stargreen.png" class="star star-3" alt="">
+        <img src="assets/starred.png" class="star star-4" alt="">
+        <img src="assets/stargreen.png" class="star star-5" alt="">
+        <img src="assets/staryellow.png" class="star star-6" alt="">
+        <img src="assets/starblue.png" class="star star-7" alt="">
+        <img src="assets/starpink.png" class="star star-8" alt="">
+        <img src="assets/starred.png" class="star star-9" alt="">
+        <img src="assets/staryellow.png" class="star star-10" alt="">
+        
         <div class="splash-container">
             <div class="logo-container">
                 <img src="assets/retroarcadelogo.png" alt="Retro Arcade Logo" class="splash-logo">
@@ -37,7 +72,56 @@
         </div>
     </div>
 
+    <!-- Mute Button -->
+    <div class="mute-button" id="muteBtn">🔊</div>
+
+    <!-- Background Audio -->
+    <audio id="bgMusic" loop>
+        <source src="assets/music/ES_A Lil BIT - Rocket Jr.mp3" type="audio/mpeg">
+    </audio>
+
     <script>
+        const bgMusic = document.getElementById('bgMusic');
+        const muteBtn = document.getElementById('muteBtn');
+        bgMusic.volume = 0.15;
+        let isMuted = false;
+        let musicStarted = false;
+
+        // Try to play immediately on page load
+        bgMusic.play().then(() => {
+            musicStarted = true;
+            muteBtn.textContent = '🔊';
+        }).catch(() => {
+            // If autoplay blocked, wait for user interaction
+            const startMusic = () => {
+                if (!musicStarted) {
+                    bgMusic.play().then(() => {
+                        musicStarted = true;
+                        isMuted = false;
+                        muteBtn.textContent = '🔊';
+                    }).catch(e => console.log('Play failed:', e));
+                }
+            };
+            
+            document.addEventListener('click', startMusic, { once: true });
+            document.addEventListener('keydown', startMusic, { once: true });
+            document.addEventListener('mousemove', startMusic, { once: true });
+        });
+
+        // Mute/Unmute toggle
+        muteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isMuted) {
+                bgMusic.volume = 0.3;
+                bgMusic.play();
+                muteBtn.textContent = '🔊';
+            } else {
+                bgMusic.pause();
+                muteBtn.textContent = '🔇';
+            }
+            isMuted = !isMuted;
+        });
+
         // Handle menu navigation
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', () => {
