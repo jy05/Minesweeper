@@ -173,10 +173,130 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
+        
+        /* Splash Screen Styles */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, rgba(10, 5, 21, 0.98), rgba(30, 15, 51, 0.98));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeIn 0.5s ease;
+        }
+        .splash-screen.hidden {
+            display: none;
+        }
+        .splash-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+        }
+        .splash-title {
+            font-size: 48px;
+            color: #ec4899;
+            text-shadow: 
+                0 0 20px rgba(236, 72, 153, 0.8),
+                0 0 40px rgba(147, 51, 234, 0.6),
+                4px 4px 0 rgba(147, 51, 234, 0.8);
+            margin-bottom: 15px;
+            animation: titleGlow 2s ease-in-out infinite;
+        }
+        .splash-subtitle {
+            font-size: 14px;
+            color: #9333ea;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+        }
+        .mode-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .mode-button {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            padding: 20px;
+            background: linear-gradient(180deg, #9333ea 0%, #6b21a8 100%);
+            border: 4px solid #4a148c;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .mode-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(236, 72, 153, 0.6);
+            border-color: #ec4899;
+        }
+        .mode-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .mode-button:hover::before {
+            left: 100%;
+        }
+        .mode-title {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .mode-desc {
+            display: block;
+            font-size: 7px;
+            color: #ec4899;
+            line-height: 1.4;
+        }
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 20px rgba(236, 72, 153, 0.8), 0 0 40px rgba(147, 51, 234, 0.6), 4px 4px 0 rgba(147, 51, 234, 0.8); }
+            50% { text-shadow: 0 0 30px rgba(236, 72, 153, 1), 0 0 60px rgba(147, 51, 234, 0.8), 4px 4px 0 rgba(147, 51, 234, 0.8); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
     <button class="back-button-top" onclick="window.location.href='../games.html'">← Back</button>
+    
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-content">
+            <div class="splash-title">JEZZBALL</div>
+            <div class="splash-subtitle">Retro Arcade Classic</div>
+            <div class="mode-buttons">
+                <button class="mode-button" onclick="startGame('normal')">
+                    <span class="mode-title">NORMAL</span>
+                    <span class="mode-desc">Unlimited walls, lose lives when hit</span>
+                </button>
+                <button class="mode-button" onclick="startGame('timeattack')">
+                    <span class="mode-title">TIME ATTACK</span>
+                    <span class="mode-desc">Race against the clock!</span>
+                </button>
+                <button class="mode-button" onclick="startGame('survival')">
+                    <span class="mode-title">SURVIVAL</span>
+                    <span class="mode-desc">Limited walls per level</span>
+                </button>
+                <button class="mode-button" onclick="startGame('freeplay')">
+                    <span class="mode-title">FREE PLAY</span>
+                    <span class="mode-desc">Unlimited continues, endless fun!</span>
+                </button>
+            </div>
+        </div>
+    </div>
     
     <div class="game-container">
         <h1>Jezzball</h1>
@@ -256,6 +376,7 @@
         const world = engine.world;
         
         let game = {
+            gameMode: 'normal', // 'normal', 'timeattack', 'survival', 'freeplay'
             level: 1,
             lives: 5,
             wallsLeft: 7,
@@ -278,6 +399,11 @@
             wallsLostThisLevel: 0,
             hiddenWalls: [], // Hidden wall pickups in current level
             levelsCompleted: 0,
+            // Time Attack mode
+            timeRemaining: 0,
+            baseLevelTime: 60, // Starting time for first level
+            // Survival mode
+            wallsUsedThisLevel: 0,
             // Active power-up states
             freezeTimeActive: false,
             slowMotionActive: false,
@@ -297,6 +423,36 @@
         
         // No boundary walls - we'll handle boundaries manually for better control
         
+        // Start game with selected mode
+        function startGame(mode) {
+            // Hide splash screen
+            document.getElementById('splashScreen').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block';
+            
+            // Set game mode
+            game.gameMode = mode;
+            
+            // Initialize mode-specific variables
+            if (mode === 'timeattack') {
+                game.timeRemaining = game.baseLevelTime;
+            } else if (mode === 'survival') {
+                // Survival mode uses wallsLeft system
+                game.wallsLeft = 7;
+            }
+            
+            // Reset game state
+            game.level = 1;
+            game.lives = 5;
+            game.isRunning = true;
+            game.isPaused = false;
+            game.powerupsUnlocked = [false, false, false, false, false, false, false];
+            game.powerupsUsed = [false, false, false, false, false, false, false];
+            game.levelsCompleted = 0;
+            
+            // Start the game
+            initLevel();
+            gameLoop();
+        }
         
         function initLevel() {
             // Remove old balls and walls
