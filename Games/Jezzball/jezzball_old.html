@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jezzball - Retro Arcade</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-image: url('../../assets/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Music Controls */
+        .music-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #9333ea;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
+        }
+
+        .volume-control-game {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .volume-slider-game {
+            width: 120px;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #0a0515;
+            border: 2px solid #4a148c;
+            border-radius: 0;
+            outline: none;
+        }
+
+        .volume-slider-game::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 0;
+            background: #9333ea;
+            cursor: pointer;
+            border: 2px solid #ec4899;
+        }
+
+        .volume-percent {
+            font-size: 10px;
+            color: #9333ea;
+            min-width: 35px;
+        }
+
+        .mute-toggle {
+            font-size: 10px;
+            padding: 8px 12px;
+            background: linear-gradient(180deg, #9333ea 0%, #6b21a8 100%);
+            border: 2px solid #4a148c;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .game-container {
+            background: linear-gradient(145deg, rgba(30, 20, 60, 0.95), rgba(50, 30, 80, 0.95));
+            border: 4px solid #9333ea;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(147, 51, 234, 0.4),
+                        inset 0 0 20px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 0 rgba(147, 51, 234, 0.8),
+                         0 0 20px rgba(255, 255, 255, 0.5);
+            line-height: 1.6;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(26, 15, 46, 0.8);
+            border: 2px solid #4a148c;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .info-item {
+            color: #9333ea;
+            font-size: 10px;
+        }
+
+        .info-value {
+            color: #ec4899;
+            margin-left: 5px;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #0a0515;
+            border: 4px solid #4a148c;
+            margin: 0 auto 15px;
+            cursor: none;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8),
+                        0 0 15px rgba(147, 51, 234, 0.3);
+        }
+
+        #gameCanvas.horizontal-cursor {
+            cursor: none;
+        }
+
+        #gameCanvas.vertical-cursor {
+            cursor: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            padding: 12px 20px;
+            background: linear-gradient(180deg, #9333ea 0%, #6b21a8 100%);
+            border: 3px solid #4a148c;
+            border-bottom: 4px solid #1a0f2e;
+            border-right: 4px solid #1a0f2e;
+            color: white;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 0 #1a0f2e,
+                        0 0 15px rgba(147, 51, 234, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #1a0f2e,
+                        0 0 20px rgba(147, 51, 234, 0.6);
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1a0f2e;
+        }
+
+        .back-button {
+            font-size: 12px;
+            width: 100%;
+        }
+
+        .message {
+            text-align: center;
+            color: #ec4899;
+            font-size: 12px;
+            margin-bottom: 10px;
+            line-height: 1.8;
+            min-height: 40px;
+        }
+
+        .powerup-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #9333ea;
+            border-radius: 10px;
+            padding: 15px 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
+        }
+
+        .powerup-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 10px;
+            border: 2px solid #4a148c;
+            border-radius: 8px;
+            min-width: 80px;
+            background: rgba(26, 15, 46, 0.6);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .powerup-item.selected {
+            border-color: #ec4899;
+            background: rgba(147, 51, 234, 0.3);
+            box-shadow: 0 0 15px rgba(236, 72, 153, 0.6);
+        }
+
+        .powerup-item.active {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+        }
+
+        .powerup-icon {
+            font-size: 24px;
+        }
+
+        .powerup-name {
+            font-size: 8px;
+            color: #9333ea;
+            text-align: center;
+        }
+
+        .powerup-status {
+            font-size: 7px;
+            color: #ec4899;
+        }
+
+        .powerup-help {
+            font-size: 9px;
+            color: rgba(147, 51, 234, 0.8);
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Music -->
+    <audio id="gameBgMusic" loop>
+        <!-- Placeholder for music - not yet selected -->
+    </audio>
+
+    <!-- Music Controls -->
+    <div class="music-controls">
+        <div class="volume-control-game">
+            <span class="volume-icon" id="volumeIcon">🔊</span>
+            <input type="range" id="volumeSlider" class="volume-slider-game" min="0" max="100" value="15">
+            <span class="volume-percent" id="volumePercent">15%</span>
+        </div>
+        <button class="mute-toggle" id="muteToggle">🔇 Mute</button>
+    </div>
+
+    <div class="game-container">
+        <h1>Jezzball</h1>
+        
+        <div class="game-info">
+            <div class="info-item">Level: <span class="info-value" id="level">1</span></div>
+            <div class="info-item">Lives: <span class="info-value" id="lives">5</span></div>
+            <div class="info-item">Walls: <span class="info-value" id="walls">7</span></div>
+            <div class="info-item">Filled: <span class="info-value" id="filled">0%</span></div>
+            <div class="info-item">Goal: <span class="info-value" id="goal">75%</span></div>
+            <div class="info-item">Direction: <span class="info-value" id="direction">Horizontal</span></div>
+        </div>
+
+        <div class="message" id="message">Click to build walls! Right-click or SPACE to switch direction!</div>
+
+        <canvas id="gameCanvas" width="700" height="500"></canvas>
+
+        <div class="controls">
+            <button id="startBtn">Start Game</button>
+            <button id="pauseBtn">Pause</button>
+            <button id="restartBtn">Restart Level</button>
+        </div>
+
+        <button class="back-button" onclick="window.location.href='../games.html'">← Back to Games</button>
+    </div>
+
+    <!-- Power-up Display -->
+    <div class="powerup-container">
+        <div class="powerup-item selected" data-powerup="0">
+            <div class="powerup-icon">❄️</div>
+            <div class="powerup-name">Freeze Time</div>
+            <div class="powerup-status">Locked</div>
+        </div>
+        <div class="powerup-item" data-powerup="1">
+            <div class="powerup-icon">⚡</div>
+            <div class="powerup-name">Electron Beam</div>
+            <div class="powerup-status">Locked</div>
+        </div>
+        <div class="powerup-item" data-powerup="2">
+            <div class="powerup-icon">💥</div>
+            <div class="powerup-name">Ball Destruction</div>
+            <div class="powerup-status">Locked</div>
+        </div>
+        <div class="powerup-item" data-powerup="3">
+            <div class="powerup-icon">🔄</div>
+            <div class="powerup-name">Bounce Update</div>
+            <div class="powerup-status">Locked</div>
+        </div>
+        <div class="powerup-item" data-powerup="4">
+            <div class="powerup-icon">⏱️</div>
+            <div class="powerup-name">Slow Motion</div>
+            <div class="powerup-status">Locked</div>
+        </div>
+        <div class="powerup-item" data-powerup="5">
+            <div class="powerup-icon">❤️</div>
+            <div class="powerup-name">Extra Life</div>
+            <div class="powerup-status">Locked</div>
+        </div>
+        <div class="powerup-help">Scroll: Select | Middle Click: Activate</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameState = {
+            level: 1,
+            lives: 5,
+            wallsLeft: 7,
+            balls: [],
+            walls: [],
+            filledArea: 0,
+            goalPercent: 75,
+            isRunning: false,
+            isPaused: false,
+            buildingWall: null,
+            grid: [],
+            fallingSections: [],
+            selectedPowerup: 0,
+            activePowerups: []
+        };
+
+        const CELL_SIZE = 5; // Larger cells for better performance
+        const GRID_WIDTH = Math.ceil(canvas.width / CELL_SIZE);
+        const GRID_HEIGHT = Math.ceil(canvas.height / CELL_SIZE);
+        const MAX_SPEED = 15;
+        let wallDirection = 'horizontal';
+        
+        // Initialize grid
+        function initGrid() {
+            gameState.grid = Array(GRID_HEIGHT).fill().map(() => Array(GRID_WIDTH).fill(0));
+            // Mark borders as filled
+            for (let i = 0; i < GRID_HEIGHT; i++) {
+                gameState.grid[i][0] = 1;
+                gameState.grid[i][GRID_WIDTH - 1] = 1;
+            }
+            for (let j = 0; j < GRID_WIDTH; j++) {
+                gameState.grid[0][j] = 1;
+                gameState.grid[GRID_HEIGHT - 1][j] = 1;
+            }
+        }
+        
+        // Mark wall cells in grid - with proper rasterization
+        function markWallInGrid(grid, wall) {
+            const WALL_HALF_THICKNESS = 2; // lineWidth is 4, so radius is 2
+            
+            if (wall.direction === 'horizontal') {
+                // Horizontal wall from (x1, y) to (x2, y)
+                // Mark all cells from y-2 to y+2
+                const startX = Math.floor(wall.x1 / CELL_SIZE);
+                const endX = Math.ceil(wall.x2 / CELL_SIZE);
+                const centerY = wall.y / CELL_SIZE;
+                const startY = Math.floor((wall.y - WALL_HALF_THICKNESS) / CELL_SIZE);
+                const endY = Math.ceil((wall.y + WALL_HALF_THICKNESS) / CELL_SIZE);
+                
+                for (let y = startY; y <= endY; y++) {
+                    for (let x = startX; x <= endX; x++) {
+                        if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT) {
+                            grid[y][x] = 1;
+                        }
+                    }
+                }
+            } else {
+                // Vertical wall from (x, y1) to (x, y2)
+                // Mark all cells from x-2 to x+2
+                const startY = Math.floor(wall.y1 / CELL_SIZE);
+                const endY = Math.ceil(wall.y2 / CELL_SIZE);
+                const centerX = wall.x / CELL_SIZE;
+                const startX = Math.floor((wall.x - WALL_HALF_THICKNESS) / CELL_SIZE);
+                const endX = Math.ceil((wall.x + WALL_HALF_THICKNESS) / CELL_SIZE);
+                
+                for (let y = startY; y <= endY; y++) {
+                    for (let x = startX; x <= endX; x++) {
+                        if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT) {
+                            grid[y][x] = 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Initialize level
+        function initLevel() {
+            gameState.balls = [];
+            gameState.walls = [];
+            gameState.filledArea = 0;
+            gameState.wallsLeft = 5 + gameState.level * 2;
+            gameState.fallingSections = [];
+            initGrid();
+
+            // Create balls based on level
+            const numBalls = Math.min(gameState.level + 1, 10);
+            const baseSpeed = 2 + gameState.level * 0.3;
+            const usedVelocities = new Set();
+            
+            for (let i = 0; i < numBalls; i++) {
+                let vx, vy, velocityKey;
+                
+                // Ensure unique velocity for each ball
+                do {
+                    const angle = (Math.random() * Math.PI * 2);
+                    const speed = baseSpeed * (0.8 + Math.random() * 0.4); // Vary speed slightly
+                    vx = Math.cos(angle) * speed;
+                    vy = Math.sin(angle) * speed;
+                    velocityKey = `${Math.round(vx * 100)},${Math.round(vy * 100)}`;
+                } while (usedVelocities.has(velocityKey));
+                
+                usedVelocities.add(velocityKey);
+                
+                gameState.balls.push({
+                    x: canvas.width / 2 + Math.random() * 100 - 50,
+                    y: canvas.height / 2 + Math.random() * 100 - 50,
+                    vx: vx,
+                    vy: vy,
+                    baseSpeed: baseSpeed,
+                    currentSpeedMultiplier: 1.0, // Track individual speed multiplier
+                    radius: 6,
+                    color: ['#9333ea', '#ec4899', '#3b82f6', '#10b981'][i % 4],
+                    trail: [] // For tracer effect
+                });
+            }
+
+            updateUI();
+            showMessage(`Level ${gameState.level} - Capture ${gameState.goalPercent}%!`);
+        }
+
+        // Start game
+        function startGame() {
+            gameState.level = 1;
+            gameState.lives = 5;
+            gameState.isRunning = true;
+            gameState.isPaused = false;
+            initLevel();
+            gameLoop();
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('lives').textContent = gameState.lives;
+            document.getElementById('walls').textContent = gameState.wallsLeft;
+            document.getElementById('filled').textContent = gameState.filledArea + '%';
+            document.getElementById('direction').textContent = wallDirection.charAt(0).toUpperCase() + wallDirection.slice(1);
+            document.getElementById('goal').textContent = gameState.goalPercent + '%';
+        }
+
+        // Show message
+        function showMessage(msg) {
+            document.getElementById('message').textContent = msg;
+        }
+
+        // Calculate individual ball's confined area size
+        function getBallAreaSize(ballX, ballY) {
+            const bx = Math.floor(ballX / CELL_SIZE);
+            const by = Math.floor(ballY / CELL_SIZE);
+            
+            // Create temp grid with borders and walls
+            const tempGrid = Array(GRID_HEIGHT).fill().map(() => Array(GRID_WIDTH).fill(0));
+            
+            // Mark borders
+            for (let i = 0; i < GRID_HEIGHT; i++) {
+                tempGrid[i][0] = 1;
+                tempGrid[i][GRID_WIDTH - 1] = 1;
+            }
+            for (let j = 0; j < GRID_WIDTH; j++) {
+                tempGrid[0][j] = 1;
+                tempGrid[GRID_HEIGHT - 1][j] = 1;
+            }
+            
+            // Copy filled areas
+            for (let i = 0; i < GRID_HEIGHT; i++) {
+                for (let j = 0; j < GRID_WIDTH; j++) {
+                    if (gameState.grid[i][j] === 1) {
+                        tempGrid[i][j] = 1;
+                    }
+                }
+            }
+            
+            // Mark all completed walls
+            gameState.walls.forEach(wall => {
+                if (wall.complete) {
+                    markWallInGrid(tempGrid, wall);
+                }
+            });
+            
+            const ballArea = new Set();
+            floodFill(tempGrid, bx, by, ballArea);
+            return ballArea.size;
+        }
+        
+        // Flood fill algorithm
+        function floodFill(grid, startX, startY, visited) {
+            if (startX < 0 || startX >= GRID_WIDTH || startY < 0 || startY >= GRID_HEIGHT) return;
+            if (grid[startY][startX] === 1) return;
+            
+            const stack = [[startX, startY]];
+            
+            while (stack.length > 0) {
+                const [x, y] = stack.pop();
+                
+                if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) continue;
+                if (grid[y][x] === 1) continue;
+                
+                const key = y * GRID_WIDTH + x;
+                if (visited.has(key)) continue;
+                
+                visited.add(key);
+                
+                stack.push([x + 1, y]);
+                stack.push([x - 1, y]);
+                stack.push([x, y + 1]);
+                stack.push([x, y - 1]);
+            }
+        }
+
+        // Calculate speed multiplier for individual ball
+        function getBallSpeedMultiplier(ball) {
+            const totalCells = GRID_WIDTH * GRID_HEIGHT;
+            const ballAreaSize = getBallAreaSize(ball.x, ball.y);
+            const playAreaRatio = ballAreaSize / totalCells;
+            
+            if (playAreaRatio <= 0.01) return 10;
+            return Math.max(1, Math.min(10, 1 / playAreaRatio));
+        }
+
+        // Update balls
+        function updateBalls() {
+            gameState.balls.forEach(ball => {
+                // Calculate individual speed multiplier
+                const targetMultiplier = getBallSpeedMultiplier(ball);
+                
+                // Smoothly transition to target multiplier
+                ball.currentSpeedMultiplier += (targetMultiplier - ball.currentSpeedMultiplier) * 0.1;
+                
+                // Apply speed multiplier
+                const targetSpeed = ball.baseSpeed * ball.currentSpeedMultiplier;
+                const currentSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                if (currentSpeed > 0 && Math.abs(currentSpeed - targetSpeed) > 0.1) {
+                    const ratio = targetSpeed / currentSpeed;
+                    ball.vx *= ratio;
+                    ball.vy *= ratio;
+                }
+                
+                // Cap speed for safety
+                const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                if (speed > MAX_SPEED) {
+                    const ratio = MAX_SPEED / speed;
+                    ball.vx *= ratio;
+                    ball.vy *= ratio;
+                }
+                
+                // Update trail
+                ball.trail.push({ x: ball.x, y: ball.y });
+                const speedRatio = speed / ball.baseSpeed;
+                const maxTrailLength = Math.floor(4 + speedRatio * 8);
+                if (ball.trail.length > maxTrailLength) {
+                    ball.trail.shift();
+                }
+                
+                // Move the ball with sub-stepping for high speeds
+                const steps = Math.ceil(speed / 2); // Sub-step every 2 pixels
+                const stepVx = ball.vx / steps;
+                const stepVy = ball.vy / steps;
+                
+                for (let step = 0; step < steps; step++) {
+                    ball.x += stepVx;
+                    ball.y += stepVy;
+                    
+                    let bounced = false;
+                    
+                    // Bounce off canvas boundaries
+                    if (ball.x - ball.radius <= 0) {
+                        ball.x = ball.radius;
+                        ball.vx = Math.abs(ball.vx);
+                        bounced = true;
+                    } else if (ball.x + ball.radius >= canvas.width) {
+                        ball.x = canvas.width - ball.radius;
+                        ball.vx = -Math.abs(ball.vx);
+                        bounced = true;
+                    }
+                    
+                    if (ball.y - ball.radius <= 0) {
+                        ball.y = ball.radius;
+                        ball.vy = Math.abs(ball.vy);
+                        bounced = true;
+                    } else if (ball.y + ball.radius >= canvas.height) {
+                        ball.y = canvas.height - ball.radius;
+                        ball.vy = -Math.abs(ball.vy);
+                        bounced = true;
+                    }
+                    
+                    if (bounced) continue;
+                    
+                    // Check if ball is in a filled area
+                    const cellX = Math.floor(ball.x / CELL_SIZE);
+                    const cellY = Math.floor(ball.y / CELL_SIZE);
+                    if (cellX >= 0 && cellX < GRID_WIDTH && cellY >= 0 && cellY < GRID_HEIGHT) {
+                        if (gameState.grid[cellY][cellX] === 1) {
+                            ball.x -= stepVx * 2;
+                            ball.y -= stepVy * 2;
+                            
+                            const leftCell = Math.floor((ball.x - ball.radius) / CELL_SIZE);
+                            const rightCell = Math.floor((ball.x + ball.radius) / CELL_SIZE);
+                            const topCell = Math.floor((ball.y - ball.radius) / CELL_SIZE);
+                            const bottomCell = Math.floor((ball.y + ball.radius) / CELL_SIZE);
+                            
+                            let hitHorizontal = false;
+                            let hitVertical = false;
+                            
+                            if (leftCell >= 0 && leftCell < GRID_WIDTH && gameState.grid[cellY][leftCell] === 1) hitVertical = true;
+                            if (rightCell >= 0 && rightCell < GRID_WIDTH && gameState.grid[cellY][rightCell] === 1) hitVertical = true;
+                            if (topCell >= 0 && topCell < GRID_HEIGHT && gameState.grid[topCell][cellX] === 1) hitHorizontal = true;
+                            if (bottomCell >= 0 && bottomCell < GRID_HEIGHT && gameState.grid[bottomCell][cellX] === 1) hitHorizontal = true;
+                            
+                            if (hitVertical) ball.vx *= -1;
+                            if (hitHorizontal) ball.vy *= -1;
+                            if (!hitVertical && !hitHorizontal) {
+                                ball.vx *= -1;
+                                ball.vy *= -1;
+                            }
+                            
+                            break;
+                        }
+                    }
+                    
+                    // Check collision with completed walls
+                    let wallHit = false;
+                    gameState.walls.forEach(wall => {
+                        if (wall.complete && !wallHit) {
+                            if (wall.direction === 'horizontal') {
+                                if (Math.abs(ball.y - wall.y) < ball.radius &&
+                                    ball.x >= wall.x1 && ball.x <= wall.x2) {
+                                    // Position ball outside wall before reversing
+                                    ball.y = wall.y + (ball.y < wall.y ? -ball.radius : ball.radius);
+                                    ball.vy *= -1;
+                                    wallHit = true;
+                                }
+                            } else {
+                                if (Math.abs(ball.x - wall.x) < ball.radius &&
+                                    ball.y >= wall.y1 && ball.y <= wall.y2) {
+                                    // Position ball outside wall before reversing
+                                    ball.x = wall.x + (ball.x < wall.x ? -ball.radius : ball.radius);
+                                    ball.vx *= -1;
+                                    wallHit = true;
+                                }
+                            }
+                        }
+                    });
+                    
+                    if (wallHit) break; // Stop sub-stepping after wall collision
+                }
+            });
+        }
+
+        // Check if ball hits building wall
+        function checkBallWallCollision(wall) {
+            return gameState.balls.some(ball => {
+                if (wall.direction === 'horizontal') {
+                    return Math.abs(ball.y - wall.y) < ball.radius &&
+                           ball.x >= wall.x1 && ball.x <= wall.x2;
+                } else {
+                    return Math.abs(ball.x - wall.x) < ball.radius &&
+                           ball.y >= wall.y1 && ball.y <= wall.y2;
+                }
+            });
+        }
+
+        // Check if building wall hits existing walls
+        function checkWallCollision(wall) {
+            return gameState.walls.some(existingWall => {
+                if (!existingWall.complete) return false;
+                
+                if (wall.direction === 'horizontal') {
+                    // Horizontal wall hitting vertical wall
+                    if (existingWall.direction === 'vertical') {
+                        return Math.abs(wall.y - existingWall.y1) < 4 && Math.abs(wall.y - existingWall.y2) < 4 &&
+                               ((wall.x1 <= existingWall.x && existingWall.x <= wall.x2) ||
+                                (existingWall.y1 <= wall.y && wall.y <= existingWall.y2));
+                    }
+                    // Horizontal wall hitting another horizontal wall
+                    else {
+                        return Math.abs(wall.y - existingWall.y) < 4 &&
+                               ((wall.x1 <= existingWall.x2 && wall.x2 >= existingWall.x1));
+                    }
+                } else {
+                    // Vertical wall hitting horizontal wall
+                    if (existingWall.direction === 'horizontal') {
+                        return Math.abs(wall.x - existingWall.x1) < 4 && Math.abs(wall.x - existingWall.x2) < 4 &&
+                               ((wall.y1 <= existingWall.y && existingWall.y <= wall.y2) ||
+                                (existingWall.x1 <= wall.x && wall.x <= existingWall.x2));
+                    }
+                    // Vertical wall hitting another vertical wall
+                    else {
+                        return Math.abs(wall.x - existingWall.x) < 4 &&
+                               ((wall.y1 <= existingWall.y2 && wall.y2 >= existingWall.y1));
+                    }
+                }
+            });
+        }
+
+        // Build wall
+        function buildWall(direction, x, y) {
+            if (gameState.wallsLeft <= 0) return;
+
+            const wall = {
+                direction,
+                x1: x,
+                y1: y,
+                x2: x,
+                y2: y,
+                x,
+                y,
+                speed: 5, // Increased from 3 for faster wall building
+                complete: false
+            };
+
+            gameState.buildingWall = wall;
+        }
+
+        // Update building wall
+        function updateBuildingWall() {
+            if (!gameState.buildingWall) return;
+
+            const wall = gameState.buildingWall;
+            
+            if (wall.direction === 'horizontal') {
+                let leftBlocked = false;
+                let rightBlocked = false;
+                
+                // Extend left
+                if (!leftBlocked) {
+                    const newX1 = wall.x1 - wall.speed;
+                    
+                    // Check boundaries
+                    if (newX1 <= 0) {
+                        wall.x1 = 0;
+                        leftBlocked = true;
+                    } else {
+                        // Check for wall collisions
+                        let hitWall = false;
+                        gameState.walls.forEach(existingWall => {
+                            if (!existingWall.complete) return;
+                            
+                            if (existingWall.direction === 'vertical') {
+                                // Check if this vertical wall intersects our horizontal wall's path
+                                if (existingWall.y1 <= wall.y && existingWall.y2 >= wall.y) {
+                                    // Check if we're about to cross this vertical wall
+                                    if (wall.x1 > existingWall.x && newX1 <= existingWall.x) {
+                                        wall.x1 = existingWall.x;
+                                        leftBlocked = true;
+                                        hitWall = true;
+                                    }
+                                }
+                            } else {
+                                // Check parallel horizontal wall intersection
+                                if (Math.abs(existingWall.y - wall.y) < 4) {
+                                    if (newX1 <= existingWall.x2 && wall.x1 > existingWall.x2) {
+                                        wall.x1 = existingWall.x2;
+                                        leftBlocked = true;
+                                        hitWall = true;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Check filled areas
+                        if (!hitWall) {
+                            const checkCell = Math.floor(newX1 / CELL_SIZE);
+                            const wallCell = Math.floor(wall.y / CELL_SIZE);
+                            if (checkCell >= 0 && checkCell < GRID_WIDTH && wallCell >= 0 && wallCell < GRID_HEIGHT && gameState.grid[wallCell][checkCell] === 1) {
+                                leftBlocked = true;
+                            } else {
+                                wall.x1 = newX1;
+                            }
+                        }
+                    }
+                }
+                
+                // Extend right
+                if (!rightBlocked) {
+                    const newX2 = wall.x2 + wall.speed;
+                    
+                    // Check boundaries
+                    if (newX2 >= canvas.width) {
+                        wall.x2 = canvas.width;
+                        rightBlocked = true;
+                    } else {
+                        // Check for wall collisions
+                        let hitWall = false;
+                        gameState.walls.forEach(existingWall => {
+                            if (!existingWall.complete) return;
+                            
+                            if (existingWall.direction === 'vertical') {
+                                // Check if this vertical wall intersects our horizontal wall's path
+                                if (existingWall.y1 <= wall.y && existingWall.y2 >= wall.y) {
+                                    // Check if we're about to cross this vertical wall
+                                    if (wall.x2 < existingWall.x && newX2 >= existingWall.x) {
+                                        wall.x2 = existingWall.x;
+                                        rightBlocked = true;
+                                        hitWall = true;
+                                    }
+                                }
+                            } else {
+                                // Check parallel horizontal wall intersection
+                                if (Math.abs(existingWall.y - wall.y) < 4) {
+                                    if (newX2 >= existingWall.x1 && wall.x2 < existingWall.x1) {
+                                        wall.x2 = existingWall.x1;
+                                        rightBlocked = true;
+                                        hitWall = true;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Check filled areas
+                        if (!hitWall) {
+                            const checkCell = Math.floor(newX2 / CELL_SIZE);
+                            const wallCell = Math.floor(wall.y / CELL_SIZE);
+                            if (checkCell >= 0 && checkCell < GRID_WIDTH && wallCell >= 0 && wallCell < GRID_HEIGHT && gameState.grid[wallCell][checkCell] === 1) {
+                                rightBlocked = true;
+                            } else {
+                                wall.x2 = newX2;
+                            }
+                        }
+                    }
+                }
+
+                if ((leftBlocked && rightBlocked) || checkBallWallCollision(wall)) {
+                    completeWall();
+                }
+            } else {
+                let topBlocked = false;
+                let bottomBlocked = false;
+                
+                // Extend up
+                if (!topBlocked) {
+                    const newY1 = wall.y1 - wall.speed;
+                    
+                    // Check boundaries
+                    if (newY1 <= 0) {
+                        wall.y1 = 0;
+                        topBlocked = true;
+                    } else {
+                        // Check for wall collisions
+                        let hitWall = false;
+                        gameState.walls.forEach(existingWall => {
+                            if (!existingWall.complete) return;
+                            
+                            if (existingWall.direction === 'horizontal') {
+                                // Check if this horizontal wall intersects our vertical wall's path
+                                if (existingWall.x1 <= wall.x && existingWall.x2 >= wall.x) {
+                                    // Check if we're about to cross this horizontal wall
+                                    if (wall.y1 > existingWall.y && newY1 <= existingWall.y) {
+                                        wall.y1 = existingWall.y;
+                                        topBlocked = true;
+                                        hitWall = true;
+                                    }
+                                }
+                            } else {
+                                // Check parallel vertical wall intersection
+                                if (Math.abs(existingWall.x - wall.x) < 4) {
+                                    if (newY1 <= existingWall.y2 && wall.y1 > existingWall.y2) {
+                                        wall.y1 = existingWall.y2;
+                                        topBlocked = true;
+                                        hitWall = true;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Check filled areas
+                        if (!hitWall) {
+                            const checkCell = Math.floor(newY1 / CELL_SIZE);
+                            const wallCell = Math.floor(wall.x / CELL_SIZE);
+                            if (checkCell >= 0 && checkCell < GRID_HEIGHT && wallCell >= 0 && wallCell < GRID_WIDTH && gameState.grid[checkCell][wallCell] === 1) {
+                                topBlocked = true;
+                            } else {
+                                wall.y1 = newY1;
+                            }
+                        }
+                    }
+                }
+                
+                // Extend down
+                if (!bottomBlocked) {
+                    const newY2 = wall.y2 + wall.speed;
+                    
+                    // Check boundaries
+                    if (newY2 >= canvas.height) {
+                        wall.y2 = canvas.height;
+                        bottomBlocked = true;
+                    } else {
+                        // Check for wall collisions
+                        let hitWall = false;
+                        gameState.walls.forEach(existingWall => {
+                            if (!existingWall.complete) return;
+                            
+                            if (existingWall.direction === 'horizontal') {
+                                // Check if this horizontal wall intersects our vertical wall's path
+                                if (existingWall.x1 <= wall.x && existingWall.x2 >= wall.x) {
+                                    // Check if we're about to cross this horizontal wall
+                                    if (wall.y2 < existingWall.y && newY2 >= existingWall.y) {
+                                        wall.y2 = existingWall.y;
+                                        bottomBlocked = true;
+                                        hitWall = true;
+                                    }
+                                }
+                            } else {
+                                // Check parallel vertical wall intersection
+                                if (Math.abs(existingWall.x - wall.x) < 4) {
+                                    if (newY2 >= existingWall.y1 && wall.y2 < existingWall.y1) {
+                                        wall.y2 = existingWall.y1;
+                                        bottomBlocked = true;
+                                        hitWall = true;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Check filled areas
+                        if (!hitWall) {
+                            const checkCell = Math.floor(newY2 / CELL_SIZE);
+                            const wallCell = Math.floor(wall.x / CELL_SIZE);
+                            if (checkCell >= 0 && checkCell < GRID_HEIGHT && wallCell >= 0 && wallCell < GRID_WIDTH && gameState.grid[checkCell][wallCell] === 1) {
+                                bottomBlocked = true;
+                            } else {
+                                wall.y2 = newY2;
+                            }
+                        }
+                    }
+                }
+
+                if ((topBlocked && bottomBlocked) || checkBallWallCollision(wall)) {
+                    completeWall();
+                }
+            }
+        }
+
+        // Complete wall
+        function completeWall() {
+            const wall = gameState.buildingWall;
+            
+            if (checkBallWallCollision(wall)) {
+                gameState.lives--;
+                showMessage('Hit by ball! Lost a life!');
+                updateUI();
+                if (gameState.lives <= 0) {
+                    gameOver();
+                    gameState.buildingWall = null;
+                    return;
+                }
+            } else {
+                wall.complete = true;
+                gameState.walls.push(wall);
+                gameState.wallsLeft--;
+                fillAreas();
+                
+                if (gameState.filledArea >= gameState.goalPercent) {
+                    gameState.buildingWall = null;
+                    levelComplete();
+                    return;
+                } else if (gameState.wallsLeft <= 0 && gameState.filledArea < gameState.goalPercent) {
+                    showMessage('No walls left! Try again!');
+                    gameState.buildingWall = null;
+                    updateUI();
+                    setTimeout(() => {
+                        gameState.lives--;
+                        if (gameState.lives <= 0) {
+                            gameOver();
+                        } else {
+                            initLevel();
+                        }
+                    }, 2000);
+                    return;
+                } else {
+                    showMessage(`${gameState.wallsLeft} walls left - ${gameState.filledArea}% filled`);
+                }
+            }
+            
+            gameState.buildingWall = null;
+            updateUI();
+        }
+
+        // Update falling sections
+        function updateFallingSections() {
+            gameState.fallingSections = gameState.fallingSections.filter(section => {
+                section.scale -= 0.02; // Shrink effect (falling away)
+                section.rotation += section.rotationSpeed;
+                section.opacity -= 0.02; // Fade as it shrinks
+                return section.scale > 0 && section.opacity > 0;
+            });
+        }
+
+        // Fill areas using efficient grid-based flood fill
+        function fillAreas() {
+            // Create temp grid with borders, filled areas, and walls
+            const tempGrid = Array(GRID_HEIGHT).fill().map(() => Array(GRID_WIDTH).fill(0));
+            
+            // Mark borders
+            for (let i = 0; i < GRID_HEIGHT; i++) {
+                tempGrid[i][0] = 1;
+                tempGrid[i][GRID_WIDTH - 1] = 1;
+            }
+            for (let j = 0; j < GRID_WIDTH; j++) {
+                tempGrid[0][j] = 1;
+                tempGrid[GRID_HEIGHT - 1][j] = 1;
+            }
+            
+            // Copy existing filled areas
+            for (let i = 0; i < GRID_HEIGHT; i++) {
+                for (let j = 0; j < GRID_WIDTH; j++) {
+                    if (gameState.grid[i][j] === 1) {
+                        tempGrid[i][j] = 1;
+                    }
+                }
+            }
+            
+            // Mark all completed walls with proper thickness
+            gameState.walls.forEach(wall => {
+                if (wall.complete) {
+                    markWallInGrid(tempGrid, wall);
+                }
+            });
+            
+            // Flood fill from each ball
+            const ballAreas = new Set();
+            gameState.balls.forEach(ball => {
+                const bx = Math.floor(ball.x / CELL_SIZE);
+                const by = Math.floor(ball.y / CELL_SIZE);
+                floodFill(tempGrid, bx, by, ballAreas);
+            });
+            
+            // Mark cells not accessible to balls as filled
+            let filledCells = 0;
+            const totalCells = GRID_WIDTH * GRID_HEIGHT;
+            
+            for (let i = 0; i < GRID_HEIGHT; i++) {
+                for (let j = 0; j < GRID_WIDTH; j++) {
+                    const key = i * GRID_WIDTH + j;
+                    if (!ballAreas.has(key) && tempGrid[i][j] !== 1) {
+                        gameState.grid[i][j] = 1;
+                        filledCells++;
+                    } else if (ballAreas.has(key)) {
+                        gameState.grid[i][j] = 0;
+                    } else {
+                        if (gameState.grid[i][j] === 1) filledCells++;
+                    }
+                }
+            }
+            
+            gameState.filledArea = Math.floor((filledCells / totalCells) * 100);
+            updateUI();
+        }
+
+        // Level complete
+        function levelComplete() {
+            gameState.isRunning = false;
+            showMessage(`Level ${gameState.level} Complete! Get ready for level ${gameState.level + 1}!`);
+            setTimeout(() => {
+                gameState.level++;
+                gameState.isRunning = true;
+                initLevel();
+                gameLoop();
+            }, 3000);
+        }
+
+        // Game over
+        function gameOver() {
+            gameState.isRunning = false;
+            showMessage('Game Over! Click Start to play again.');
+        }
+
+        // Draw cursor
+        let mouseX = -100;
+        let mouseY = -100;
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            mouseX = -100;
+            mouseY = -100;
+        });
+
+        // Draw
+        function draw() {
+            // Clear and fill background
+            ctx.fillStyle = '#0a0515';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw filled areas (grid-based)
+            ctx.fillStyle = '#2d1b4e';
+            for (let i = 0; i < GRID_HEIGHT; i++) {
+                for (let j = 0; j < GRID_WIDTH; j++) {
+                    if (gameState.grid[i][j] === 1) {
+                        ctx.fillRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+
+            // Draw completed walls
+            ctx.save();
+            ctx.strokeStyle = '#9333ea';
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#9333ea';
+            gameState.walls.forEach(wall => {
+                if (wall.complete) {
+                    ctx.beginPath();
+                    if (wall.direction === 'horizontal') {
+                        ctx.moveTo(wall.x1, wall.y);
+                        ctx.lineTo(wall.x2, wall.y);
+                    } else {
+                        ctx.moveTo(wall.x, wall.y1);
+                        ctx.lineTo(wall.x, wall.y2);
+                    }
+                    ctx.stroke();
+                }
+            });
+            ctx.restore();
+
+            // Draw building wall
+            if (gameState.buildingWall) {
+                ctx.save();
+                ctx.strokeStyle = '#ec4899';
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ec4899';
+                ctx.beginPath();
+                const wall = gameState.buildingWall;
+                if (wall.direction === 'horizontal') {
+                    ctx.moveTo(wall.x1, wall.y);
+                    ctx.lineTo(wall.x2, wall.y);
+                } else {
+                    ctx.moveTo(wall.x, wall.y1);
+                    ctx.lineTo(wall.x, wall.y2);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Draw falling sections
+            gameState.fallingSections.forEach(section => {
+                ctx.save();
+                ctx.globalAlpha = section.opacity;
+                ctx.translate(section.x + section.width / 2, section.y + section.height / 2);
+                ctx.rotate(section.rotation);
+                ctx.scale(section.scale, section.scale);
+                ctx.fillStyle = '#1a0f2e';
+                ctx.fillRect(-section.width / 2, -section.height / 2, section.width, section.height);
+                ctx.restore();
+            });
+
+            // Draw ball tracers
+            gameState.balls.forEach(ball => {
+                if (ball.trail.length > 1) {
+                    ctx.save();
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    
+                    // Draw trail with glowing neon effect
+                    for (let i = 1; i < ball.trail.length; i++) {
+                        const progress = i / ball.trail.length;
+                        const alpha = progress * 0.8; // Fade from 0 to 0.8
+                        
+                        // Draw outer glow
+                        ctx.strokeStyle = ball.color;
+                        ctx.globalAlpha = alpha * 0.3;
+                        ctx.lineWidth = 6;
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = ball.color;
+                        ctx.beginPath();
+                        ctx.moveTo(ball.trail[i - 1].x, ball.trail[i - 1].y);
+                        ctx.lineTo(ball.trail[i].x, ball.trail[i].y);
+                        ctx.stroke();
+                        
+                        // Draw bright core
+                        ctx.globalAlpha = alpha;
+                        ctx.lineWidth = 3;
+                        ctx.shadowBlur = 8;
+                        ctx.beginPath();
+                        ctx.moveTo(ball.trail[i - 1].x, ball.trail[i - 1].y);
+                        ctx.lineTo(ball.trail[i].x, ball.trail[i].y);
+                        ctx.stroke();
+                    }
+                    
+                    ctx.restore();
+                }
+            });
+
+            // Draw balls with 3D effect
+            gameState.balls.forEach(ball => {
+                ctx.save();
+                // Shadow/glow
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = ball.color;
+                
+                // Create 3D gradient
+                const gradient = ctx.createRadialGradient(
+                    ball.x - ball.radius * 0.3, 
+                    ball.y - ball.radius * 0.3, 
+                    ball.radius * 0.1,
+                    ball.x, 
+                    ball.y, 
+                    ball.radius
+                );
+                
+                // Lighter at top-left (highlight)
+                gradient.addColorStop(0, '#ffffff');
+                gradient.addColorStop(0.3, ball.color);
+                gradient.addColorStop(1, darkenColor(ball.color, 0.4));
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Rim light
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.shadowBlur = 0;
+                ctx.stroke();
+                
+                // Highlight shine
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.arc(ball.x - ball.radius * 0.35, ball.y - ball.radius * 0.35, ball.radius * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+            
+            // Draw cursor direction indicator and crosshair (always show when game is running)
+            if (mouseX >= 0 && mouseX <= canvas.width && mouseY >= 0 && mouseY <= canvas.height && 
+                gameState.isRunning && !gameState.isPaused) {
+                ctx.save();
+                
+                // Direction line (only when not building)
+                if (!gameState.buildingWall) {
+                    ctx.strokeStyle = 'rgba(236, 72, 153, 0.6)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.shadowBlur = 5;
+                    ctx.shadowColor = '#ec4899';
+                    
+                    ctx.beginPath();
+                    if (wallDirection === 'horizontal') {
+                        ctx.moveTo(0, mouseY);
+                        ctx.lineTo(canvas.width, mouseY);
+                    } else {
+                        ctx.moveTo(mouseX, 0);
+                        ctx.lineTo(mouseX, canvas.height);
+                    }
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+                
+                // Always draw cursor crosshair
+                ctx.strokeStyle = '#ec4899';
+                ctx.fillStyle = '#ec4899';
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#ec4899';
+                
+                // Crosshair lines
+                ctx.beginPath();
+                ctx.moveTo(mouseX - 10, mouseY);
+                ctx.lineTo(mouseX - 3, mouseY);
+                ctx.moveTo(mouseX + 3, mouseY);
+                ctx.lineTo(mouseX + 10, mouseY);
+                ctx.moveTo(mouseX, mouseY - 10);
+                ctx.lineTo(mouseX, mouseY - 3);
+                ctx.moveTo(mouseX, mouseY + 3);
+                ctx.lineTo(mouseX, mouseY + 10);
+                ctx.stroke();
+                
+                // Center dot
+                ctx.shadowBlur = 5;
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        // Helper function to darken a color
+        function darkenColor(color, factor) {
+            const hex = color.replace('#', '');
+            const r = Math.max(0, parseInt(hex.substr(0, 2), 16) * (1 - factor));
+            const g = Math.max(0, parseInt(hex.substr(2, 2), 16) * (1 - factor));
+            const b = Math.max(0, parseInt(hex.substr(4, 2), 16) * (1 - factor));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!gameState.isRunning) return;
+            if (!gameState.isPaused) {
+                updateBalls();
+                updateBuildingWall();
+                updateFallingSections();
+                draw();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Event listeners
+        canvas.addEventListener('click', (e) => {
+            if (!gameState.isRunning || gameState.isPaused || gameState.buildingWall) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            buildWall(wallDirection, x, y);
+        });
+
+        // Prevent context menu and use right-click to toggle direction
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            wallDirection = wallDirection === 'horizontal' ? 'vertical' : 'horizontal';
+            updateUI();
+            showMessage(`Direction: ${wallDirection.charAt(0).toUpperCase() + wallDirection.slice(1)}`);
+        });
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                wallDirection = wallDirection === 'horizontal' ? 'vertical' : 'horizontal';
+                updateUI();
+                showMessage(`Direction: ${wallDirection.charAt(0).toUpperCase() + wallDirection.slice(1)}`);
+            }
+        });
+
+        // Power-up controls
+        const powerupItems = document.querySelectorAll('.powerup-item');
+        
+        // Mouse wheel to scroll through power-ups
+        document.addEventListener('wheel', (e) => {
+            if (e.deltaY > 0) {
+                // Scroll down - next power-up
+                gameState.selectedPowerup = (gameState.selectedPowerup + 1) % powerupItems.length;
+            } else {
+                // Scroll up - previous power-up
+                gameState.selectedPowerup = (gameState.selectedPowerup - 1 + powerupItems.length) % powerupItems.length;
+            }
+            updatePowerupUI();
+        });
+        
+        // Middle mouse click to activate power-up
+        document.addEventListener('mousedown', (e) => {
+            if (e.button === 1) { // Middle mouse button
+                e.preventDefault();
+                activatePowerup(gameState.selectedPowerup);
+            }
+        });
+        
+        function updatePowerupUI() {
+            powerupItems.forEach((item, index) => {
+                item.classList.remove('selected');
+                if (index === gameState.selectedPowerup) {
+                    item.classList.add('selected');
+                }
+            });
+        }
+        
+        function activatePowerup(index) {
+            // Placeholder - will be implemented later
+            // Freeze Time: Balls freeze with ice effect, countdown timer, shatter when done
+            // Electron Beam: Walls have purple electric effect, balls touching get slowed
+            // Ball Destruction: Middle click on ball to destroy it
+            // Bounce Update: Updates ball bounce mechanics or adds bounce power-ups
+            // Slow Motion: Slows down all balls temporarily for easier wall placement
+            // Extra Life: Grants an additional life to the player
+            const powerupNames = ['Freeze Time', 'Electron Beam', 'Ball Destruction', 'Bounce Update', 'Slow Motion', 'Extra Life'];
+            showMessage(`${powerupNames[index]} - Coming Soon!`);
+            console.log(`Attempting to activate power-up: ${powerupNames[index]}`);
+        }
+        
+        // Initialize power-up UI
+        updatePowerupUI();
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            gameState.isPaused = !gameState.isPaused;
+            document.getElementById('pauseBtn').textContent = gameState.isPaused ? 'Resume' : 'Pause';
+        });
+
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            if (gameState.isRunning) {
+                initLevel();
+            } else {
+                startGame();
+            }
+        });
+
+        // Music controls (disabled - music not yet selected)
+        const gameBgMusic = document.getElementById('gameBgMusic');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeIcon = document.getElementById('volumeIcon');
+        const volumePercent = document.getElementById('volumePercent');
+        const muteToggle = document.getElementById('muteToggle');
+        
+        // Disable music controls until music is added
+        volumeSlider.disabled = true;
+        muteToggle.disabled = true;
+        volumeSlider.style.opacity = '0.5';
+        muteToggle.style.opacity = '0.5';
+        muteToggle.style.cursor = 'not-allowed';
+        
+        gameBgMusic.volume = 0.15;
+        let isMusicMuted = false;
+        
+        // Music functionality disabled until music file is selected
+        /*
+        gameBgMusic.play().catch(() => {
+            const startMusic = () => {
+                gameBgMusic.play().catch(e => console.log('Music play failed:', e));
+            };
+            document.addEventListener('click', startMusic, { once: true });
+        });
+        */
+        
+        volumeSlider.addEventListener('input', (e) => {
+            const volume = e.target.value / 100;
+            gameBgMusic.volume = volume;
+            volumePercent.textContent = e.target.value + '%';
+            volumeIcon.textContent = volume === 0 ? '🔇' : volume < 0.5 ? '🔉' : '🔊';
+        });
+        
+        muteToggle.addEventListener('click', () => {
+            if (isMusicMuted) {
+                gameBgMusic.play();
+                muteToggle.textContent = '🔇 Mute';
+                isMusicMuted = false;
+            } else {
+                gameBgMusic.pause();
+                muteToggle.textContent = '🔊 Unmute';
+                isMusicMuted = true;
+            }
+        });
+
+        // Initialize
+        initGrid();
+        draw();
+    </script>
+</body>
+</html>
