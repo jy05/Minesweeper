@@ -537,7 +537,22 @@
         function updateUI() {
             document.getElementById('level').textContent = game.level;
             document.getElementById('lives').textContent = game.lives;
-            document.getElementById('walls').textContent = game.wallsLeft;
+            
+            // Show walls counter only in Survival mode, show timer in Time Attack mode
+            const wallsElement = document.getElementById('walls').parentElement;
+            if (game.gameMode === 'survival') {
+                document.getElementById('walls').textContent = game.wallsLeft;
+                wallsElement.style.display = '';
+            } else if (game.gameMode === 'timeattack') {
+                const minutes = Math.floor(game.timeRemaining / 60);
+                const seconds = Math.floor(game.timeRemaining % 60);
+                document.getElementById('walls').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                wallsElement.querySelector('.info-item').textContent = 'Time: ';
+                wallsElement.style.display = '';
+            } else {
+                wallsElement.style.display = 'none'; // Hide in Normal/Free Play modes
+            }
+            
             document.getElementById('direction').textContent = wallDirection.charAt(0).toUpperCase() + wallDirection.slice(1);
             document.getElementById('goal').textContent = game.goalPercent + '%';
             
@@ -1622,6 +1637,16 @@
             if (!game.isRunning) return;
             
             if (!game.isPaused) {
+                // Time Attack mode - decrease timer
+                if (game.gameMode === 'timeattack' && game.timeRemaining > 0) {
+                    game.timeRemaining -= 1/60; // Decrease by 1/60th second per frame (assuming 60fps)
+                    if (game.timeRemaining <= 0) {
+                        game.timeRemaining = 0;
+                        gameOver();
+                        return;
+                    }
+                }
+                
                 updateBallSpeeds();
                 updateBallPhysics();
                 updateBuildingWall();
@@ -1641,18 +1666,29 @@
             const completionTime = (Date.now() - game.levelStartTime) / 1000; // seconds
             const filledPercent = calculateFilledPercent();
             
-            // Check unlock conditions
-            checkUnlockConditions(completionTime, filledPercent);
-            
-            // +1 wall every 5 levels
-            if (game.levelsCompleted % 5 === 0) {
-                showMessage(`Level ${game.level} Complete! 🎉 Bonus: +1 Wall for reaching level ${game.levelsCompleted}!`);
+            // Time Attack mode - add bonus time for quick completion
+            if (game.gameMode === 'timeattack') {
+                const bonusTime = Math.max(0, 30 - completionTime); // Up to 30 seconds bonus
+                game.timeRemaining += bonusTime;
+                if (bonusTime > 0) {
+                    showMessage(`Level ${game.level} Complete! +${bonusTime.toFixed(1)}s bonus time!`);
+                } else {
+                    showMessage(`Level ${game.level} Complete!`);
+                }
             } else {
-                showMessage(`Level ${game.level} Complete!`);
+                // Check unlock conditions
+                checkUnlockConditions(completionTime, filledPercent);
+                
+                // +1 wall every 5 levels
+                if (game.levelsCompleted % 5 === 0) {
+                    showMessage(`Level ${game.level} Complete! 🎉 Bonus: +1 Wall for reaching level ${game.levelsCompleted}!`);
+                } else {
+                    showMessage(`Level ${game.level} Complete!`);
+                }
             }
             
             setTimeout(() => {
-                if (game.levelsCompleted % 5 === 0) {
+                if (game.levelsCompleted % 5 === 0 && game.gameMode !== 'timeattack') {
                     game.lives++; // Give +1 wall (lives = walls)
                     updateUI();
                 }
