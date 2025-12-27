@@ -465,7 +465,16 @@
                 tempGrid[GRID_HEIGHT - 1][j] = 1;
             }
             
-            // Mark all completed walls
+            // Copy filled areas from game grid (areas that have dropped off)
+            for (let i = 0; i < GRID_HEIGHT; i++) {
+                for (let j = 0; j < GRID_WIDTH; j++) {
+                    if (gameState.grid[i][j] === 1) {
+                        tempGrid[i][j] = 1;
+                    }
+                }
+            }
+            
+            // Mark all completed walls (may overlap with filled areas, that's ok)
             gameState.walls.forEach(wall => {
                 if (wall.complete) {
                     if (wall.direction === 'horizontal') {
@@ -899,34 +908,73 @@
                 tempGrid[GRID_HEIGHT - 1][j] = 1;
             }
             
-            // Mark completed walls
-            gameState.walls.forEach(wall => {
+            // Copy previously filled areas from game grid (important!)
+            for (let i = 0; i < GRID_HEIGHT; i++) {
+                for (let j = 0; j < GRID_WIDTH; j++) {
+                    if (oldGrid[i][j] === 1) {
+                        tempGrid[i][j] = 1;
+                    }
+                }
+            }
+            
+            // Mark completed walls (THICK for flood fill blocking only - doesn't affect ball collision)
+            let wallCellsMarked = 0;
+            gameState.walls.forEach((wall, idx) => {
                 if (wall.complete) {
                     if (wall.direction === 'horizontal') {
+                        // Mark the wall row with 7-cell thickness for flood fill blocking
                         const y = Math.floor(wall.y / CELL_SIZE);
-                        for (let x = Math.floor(wall.x1 / CELL_SIZE); x <= Math.floor(wall.x2 / CELL_SIZE); x++) {
-                            if (y >= 0 && y < GRID_HEIGHT && x >= 0 && x < GRID_WIDTH) {
-                                tempGrid[y][x] = 1;
+                        // Extend endpoints by 5 cells to ensure overlap
+                        const x1 = Math.max(0, Math.floor(wall.x1 / CELL_SIZE) - 5);
+                        const x2 = Math.min(GRID_WIDTH - 1, Math.ceil(wall.x2 / CELL_SIZE) + 5);
+                        
+                        console.log(`Wall ${idx} (H): y=${wall.y} (grid ${y}), x1=${wall.x1} (grid ${x1}), x2=${wall.x2} (grid ${x2}), span=${x2-x1+1} cells`);
+                        
+                        for (let x = x1; x <= x2; x++) {
+                            // Mark 7 rows thick to seal gaps (±3)
+                            for (let dy = -3; dy <= 3; dy++) {
+                                const row = y + dy;
+                                if (row >= 0 && row < GRID_HEIGHT && x >= 0 && x < GRID_WIDTH) {
+                                    tempGrid[row][x] = 1;
+                                    wallCellsMarked++;
+                                }
                             }
                         }
                     } else {
+                        // Mark the wall column with 7-cell thickness for flood fill blocking
                         const x = Math.floor(wall.x / CELL_SIZE);
-                        for (let y = Math.floor(wall.y1 / CELL_SIZE); y <= Math.floor(wall.y2 / CELL_SIZE); y++) {
-                            if (y >= 0 && y < GRID_HEIGHT && x >= 0 && x < GRID_WIDTH) {
-                                tempGrid[y][x] = 1;
+                        // Extend endpoints by 5 cells to ensure overlap
+                        const y1 = Math.max(0, Math.floor(wall.y1 / CELL_SIZE) - 5);
+                        const y2 = Math.min(GRID_HEIGHT - 1, Math.ceil(wall.y2 / CELL_SIZE) + 5);
+                        
+                        console.log(`Wall ${idx} (V): x=${wall.x} (grid ${x}), y1=${wall.y1} (grid ${y1}), y2=${wall.y2} (grid ${y2}), span=${y2-y1+1} cells`);
+                        
+                        for (let y = y1; y <= y2; y++) {
+                            // Mark 7 columns thick to seal gaps (±3)
+                            for (let dx = -3; dx <= 3; dx++) {
+                                const col = x + dx;
+                                if (y >= 0 && y < GRID_HEIGHT && col >= 0 && col < GRID_WIDTH) {
+                                    tempGrid[y][col] = 1;
+                                    wallCellsMarked++;
+                                }
                             }
                         }
                     }
                 }
             });
+            console.log(`Completed walls: ${gameState.walls.filter(w => w.complete).length}, Wall cells marked: ${wallCellsMarked}`);
 
             // Flood fill from each ball position
             const ballAreas = new Set();
-            gameState.balls.forEach(ball => {
+            gameState.balls.forEach((ball, index) => {
                 const bx = Math.floor(ball.x / CELL_SIZE);
                 const by = Math.floor(ball.y / CELL_SIZE);
+                const beforeSize = ballAreas.size;
                 floodFill(tempGrid, bx, by, ballAreas);
+                console.log(`Ball ${index} at (${ball.x.toFixed(1)}, ${ball.y.toFixed(1)}) -> grid (${bx}, ${by}), accessible cells: ${ballAreas.size - beforeSize}`);
             });
+            
+            console.log(`Total balls: ${gameState.balls.length}, Total accessible cells: ${ballAreas.size}, Total cells: ${GRID_WIDTH * GRID_HEIGHT}`);
 
             // Mark cells that should be filled (not in ball areas)
             // and create falling sections for newly filled areas (grouped into chunks)
@@ -941,19 +989,27 @@
                 for (let j = 0; j < GRID_WIDTH; j++) {
                     const key = i * GRID_WIDTH + j;
                     const wasEmpty = oldGrid[i][j] === 0;
+                    const wasFilled = oldGrid[i][j] === 1;
                     const isNotInBallArea = !ballAreas.has(key);
-                    const isWall = tempGrid[i][j] === 1;
+                    const isBoundaryOrWall = (i === 0 || i === GRID_HEIGHT - 1 || j === 0 || j === GRID_WIDTH - 1);
                     
-                    if (isWall || isNotInBallArea) {
+                    // Keep previously filled cells filled
+                    if (wasFilled) {
                         filledCells++;
-                        gameState.grid[i][j] = 1; // Mark as filled/wall
+                        gameState.grid[i][j] = 1;
+                    }
+                    // Fill cells not accessible to balls
+                    else if (isNotInBallArea) {
+                        filledCells++;
+                        gameState.grid[i][j] = 1;
                         
-                        // Mark cells that will fall (was empty, not in ball area, not originally a wall)
-                        if (wasEmpty && isNotInBallArea && !isWall) {
+                        // Mark cells that will fall (was empty, now being filled)
+                        if (wasEmpty) {
                             fallingGrid[i][j] = true;
                         }
-                    } else {
-                        // Cell is in ball area - keep it open
+                    }
+                    // Cell is accessible to balls and wasn't filled before - keep it open
+                    else {
                         gameState.grid[i][j] = 0;
                     }
                 }
@@ -992,6 +1048,8 @@
             }
 
             gameState.filledArea = Math.floor((filledCells / totalCells) * 100);
+            
+            console.log(`Filled: ${filledCells}/${totalCells} = ${gameState.filledArea}%, Falling sections: ${sections.length}`);
             
             // Add falling sections (now much fewer)
             if (sections.length > 0) {
@@ -1066,7 +1124,7 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Draw filled areas
-            ctx.fillStyle = '#1a0f2e';
+            ctx.fillStyle = '#2d1b4e'; // Lighter purple to be more visible
             for (let i = 0; i < GRID_HEIGHT; i++) {
                 for (let j = 0; j < GRID_WIDTH; j++) {
                     if (gameState.grid[i][j] === 1 || gameState.grid[i][j] === 2) {
