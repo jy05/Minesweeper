@@ -256,14 +256,15 @@
             wallsLeft: 7,
             balls: [],
             completedWalls: [],
-            buildingWall: null,
+            buildingWalls: [], // Changed to array for multiple simultaneous walls
             isRunning: false,
             isPaused: false,
             goalPercent: 75,
             fallingSections: [],
             selectedPowerup: 0,
             activePowerups: [],
-            permanentlyFilled: new Set() // Track cells that have already been filled
+            permanentlyFilled: new Set(), // Track cells that have already been filled
+            collisionEffects: [] // Ball collision sparkle effects
         };
         
         let wallDirection = 'horizontal';
@@ -285,7 +286,7 @@
             
             game.balls = [];
             game.completedWalls = [];
-            game.buildingWall = null;
+            game.buildingWalls = [];
             game.wallsLeft = 5 + game.level * 2;
             game.permanentlyFilled.clear(); // Reset filled areas for new level
             
@@ -347,149 +348,194 @@
         }
         
         function updateBuildingWall() {
-            if (!game.buildingWall) return;
-            
-            const wall = game.buildingWall;
-            
-            if (wall.direction === 'horizontal') {
-                // Extend wall in both directions
-                const newWidth = wall.width + WALL_SPEED * 2;
-                const newX = wall.x - WALL_SPEED;
-                
-                // Check left extension
-                let leftBlocked = false;
-                if (newX <= 0) {
-                    wall.x = 0;
-                    leftBlocked = true;
-                } else {
-                    // Check for wall collision on left
-                    let leftWallX = null;
-                    game.completedWalls.forEach(w => {
-                        const bounds = w.bounds;
-                        // Check if wall intersects vertically with our horizontal wall
-                        if (wall.y + WALL_THICKNESS > bounds.min.y && wall.y < bounds.max.y) {
-                            // Check if this wall is to the left and we're about to hit it
-                            if (bounds.max.x >= newX && bounds.max.x <= wall.x) {
-                                if (leftWallX === null || bounds.max.x > leftWallX) {
-                                    leftWallX = bounds.max.x;
-                                }
-                            }
-                        }
-                    });
+            // Update all building walls
+            game.buildingWalls = game.buildingWalls.filter((wall, wallIndex) => {
+                if (wall.direction === 'horizontal') {
+                    // Extend wall in both directions
+                    const newWidth = wall.width + WALL_SPEED * 2;
+                    const newX = wall.x - WALL_SPEED;
                     
-                    if (leftWallX !== null) {
-                        wall.x = leftWallX;
+                    // Check left extension
+                    let leftBlocked = false;
+                    if (newX <= 0) {
+                        wall.x = 0;
                         leftBlocked = true;
                     } else {
-                        wall.x = newX;
-                    }
-                }
-                
-                // Check right extension
-                let rightBlocked = false;
-                const newRightEdge = wall.x + newWidth;
-                if (newRightEdge >= canvas.width) {
-                    wall.width = canvas.width - wall.x;
-                    rightBlocked = true;
-                } else {
-                    // Check for wall collision on right
-                    let rightWallX = null;
-                    const currentRightEdge = wall.x + wall.width;
-                    game.completedWalls.forEach(w => {
-                        const bounds = w.bounds;
-                        // Check if wall intersects vertically with our horizontal wall
-                        if (wall.y + WALL_THICKNESS > bounds.min.y && wall.y < bounds.max.y) {
-                            // Check if this wall is to the right and we're about to hit it
-                            if (bounds.min.x <= newRightEdge && bounds.min.x >= currentRightEdge) {
-                                if (rightWallX === null || bounds.min.x < rightWallX) {
-                                    rightWallX = bounds.min.x;
+                        // Check for completed wall collision on left
+                        let leftWallX = null;
+                        game.completedWalls.forEach(w => {
+                            const bounds = w.bounds;
+                            if (wall.y + WALL_THICKNESS > bounds.min.y && wall.y < bounds.max.y) {
+                                if (bounds.max.x >= newX && bounds.max.x <= wall.x) {
+                                    if (leftWallX === null || bounds.max.x > leftWallX) {
+                                        leftWallX = bounds.max.x;
+                                    }
                                 }
                             }
+                        });
+                        
+                        // Check for other building wall collision on left
+                        game.buildingWalls.forEach((otherWall, otherIndex) => {
+                            if (otherIndex === wallIndex) return;
+                            const otherRight = otherWall.x + otherWall.width;
+                            if (wall.y + WALL_THICKNESS > otherWall.y && wall.y < otherWall.y + otherWall.height) {
+                                if (otherRight >= newX && otherRight <= wall.x) {
+                                    if (leftWallX === null || otherRight > leftWallX) {
+                                        leftWallX = otherRight;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        if (leftWallX !== null) {
+                            wall.x = leftWallX;
+                            leftBlocked = true;
+                        } else {
+                            wall.x = newX;
                         }
-                    });
+                    }
                     
-                    if (rightWallX !== null) {
-                        wall.width = rightWallX - wall.x;
+                    // Check right extension
+                    let rightBlocked = false;
+                    const newRightEdge = wall.x + newWidth;
+                    if (newRightEdge >= canvas.width) {
+                        wall.width = canvas.width - wall.x;
                         rightBlocked = true;
                     } else {
-                        wall.width = newWidth;
-                    }
-                }
-                
-                const hitBall = checkBallCollision(wall);
-                if ((leftBlocked && rightBlocked) || hitBall) {
-                    completeWall(hitBall);
-                }
-            } else {
-                // Extend wall in both directions
-                const newHeight = wall.height + WALL_SPEED * 2;
-                const newY = wall.y - WALL_SPEED;
-                
-                // Check top extension
-                let topBlocked = false;
-                if (newY <= 0) {
-                    wall.y = 0;
-                    topBlocked = true;
-                } else {
-                    // Check for wall collision on top
-                    let topWallY = null;
-                    game.completedWalls.forEach(w => {
-                        const bounds = w.bounds;
-                        // Check if wall intersects horizontally with our vertical wall
-                        if (wall.x + WALL_THICKNESS > bounds.min.x && wall.x < bounds.max.x) {
-                            // Check if this wall is above and we're about to hit it
-                            if (bounds.max.y >= newY && bounds.max.y <= wall.y) {
-                                if (topWallY === null || bounds.max.y > topWallY) {
-                                    topWallY = bounds.max.y;
+                        // Check for completed wall collision on right
+                        let rightWallX = null;
+                        const currentRightEdge = wall.x + wall.width;
+                        game.completedWalls.forEach(w => {
+                            const bounds = w.bounds;
+                            if (wall.y + WALL_THICKNESS > bounds.min.y && wall.y < bounds.max.y) {
+                                if (bounds.min.x <= newRightEdge && bounds.min.x >= currentRightEdge) {
+                                    if (rightWallX === null || bounds.min.x < rightWallX) {
+                                        rightWallX = bounds.min.x;
+                                    }
                                 }
                             }
+                        });
+                        
+                        // Check for other building wall collision on right
+                        game.buildingWalls.forEach((otherWall, otherIndex) => {
+                            if (otherIndex === wallIndex) return;
+                            if (wall.y + WALL_THICKNESS > otherWall.y && wall.y < otherWall.y + otherWall.height) {
+                                if (otherWall.x <= newRightEdge && otherWall.x >= currentRightEdge) {
+                                    if (rightWallX === null || otherWall.x < rightWallX) {
+                                        rightWallX = otherWall.x;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        if (rightWallX !== null) {
+                            wall.width = rightWallX - wall.x;
+                            rightBlocked = true;
+                        } else {
+                            wall.width = newWidth;
                         }
-                    });
+                    }
                     
-                    if (topWallY !== null) {
-                        wall.y = topWallY;
+                    const hitBall = checkBallCollision(wall);
+                    if ((leftBlocked && rightBlocked) || hitBall) {
+                        completeWall(wall, hitBall);
+                        return false; // Remove from array
+                    }
+                } else {
+                    // Vertical wall
+                    const newHeight = wall.height + WALL_SPEED * 2;
+                    const newY = wall.y - WALL_SPEED;
+                    
+                    // Check top extension
+                    let topBlocked = false;
+                    if (newY <= 0) {
+                        wall.y = 0;
                         topBlocked = true;
                     } else {
-                        wall.y = newY;
-                    }
-                }
-                
-                // Check bottom extension
-                let bottomBlocked = false;
-                const newBottomEdge = wall.y + newHeight;
-                if (newBottomEdge >= canvas.height) {
-                    wall.height = canvas.height - wall.y;
-                    bottomBlocked = true;
-                } else {
-                    // Check for wall collision on bottom
-                    let bottomWallY = null;
-                    const currentBottomEdge = wall.y + wall.height;
-                    game.completedWalls.forEach(w => {
-                        const bounds = w.bounds;
-                        // Check if wall intersects horizontally with our vertical wall
-                        if (wall.x + WALL_THICKNESS > bounds.min.x && wall.x < bounds.max.x) {
-                            // Check if this wall is below and we're about to hit it
-                            if (bounds.min.y <= newBottomEdge && bounds.min.y >= currentBottomEdge) {
-                                if (bottomWallY === null || bounds.min.y < bottomWallY) {
-                                    bottomWallY = bounds.min.y;
+                        // Check for completed wall collision on top
+                        let topWallY = null;
+                        game.completedWalls.forEach(w => {
+                            const bounds = w.bounds;
+                            if (wall.x + WALL_THICKNESS > bounds.min.x && wall.x < bounds.max.x) {
+                                if (bounds.max.y >= newY && bounds.max.y <= wall.y) {
+                                    if (topWallY === null || bounds.max.y > topWallY) {
+                                        topWallY = bounds.max.y;
+                                    }
                                 }
                             }
+                        });
+                        
+                        // Check for other building wall collision on top
+                        game.buildingWalls.forEach((otherWall, otherIndex) => {
+                            if (otherIndex === wallIndex) return;
+                            const otherBottom = otherWall.y + otherWall.height;
+                            if (wall.x + WALL_THICKNESS > otherWall.x && wall.x < otherWall.x + otherWall.width) {
+                                if (otherBottom >= newY && otherBottom <= wall.y) {
+                                    if (topWallY === null || otherBottom > topWallY) {
+                                        topWallY = otherBottom;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        if (topWallY !== null) {
+                            wall.y = topWallY;
+                            topBlocked = true;
+                        } else {
+                            wall.y = newY;
                         }
-                    });
+                    }
                     
-                    if (bottomWallY !== null) {
-                        wall.height = bottomWallY - wall.y;
+                    // Check bottom extension
+                    let bottomBlocked = false;
+                    const newBottomEdge = wall.y + newHeight;
+                    if (newBottomEdge >= canvas.height) {
+                        wall.height = canvas.height - wall.y;
                         bottomBlocked = true;
                     } else {
-                        wall.height = newHeight;
+                        // Check for completed wall collision on bottom
+                        let bottomWallY = null;
+                        const currentBottomEdge = wall.y + wall.height;
+                        game.completedWalls.forEach(w => {
+                            const bounds = w.bounds;
+                            if (wall.x + WALL_THICKNESS > bounds.min.x && wall.x < bounds.max.x) {
+                                if (bounds.min.y <= newBottomEdge && bounds.min.y >= currentBottomEdge) {
+                                    if (bottomWallY === null || bounds.min.y < bottomWallY) {
+                                        bottomWallY = bounds.min.y;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Check for other building wall collision on bottom
+                        game.buildingWalls.forEach((otherWall, otherIndex) => {
+                            if (otherIndex === wallIndex) return;
+                            if (wall.x + WALL_THICKNESS > otherWall.x && wall.x < otherWall.x + otherWall.width) {
+                                if (otherWall.y <= newBottomEdge && otherWall.y >= currentBottomEdge) {
+                                    if (bottomWallY === null || otherWall.y < bottomWallY) {
+                                        bottomWallY = otherWall.y;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        if (bottomWallY !== null) {
+                            wall.height = bottomWallY - wall.y;
+                            bottomBlocked = true;
+                        } else {
+                            wall.height = newHeight;
+                        }
+                    }
+                    
+                    const hitBall = checkBallCollision(wall);
+                    if ((topBlocked && bottomBlocked) || hitBall) {
+                        completeWall(wall, hitBall);
+                        return false; // Remove from array
                     }
                 }
                 
-                const hitBall = checkBallCollision(wall);
-                if ((topBlocked && bottomBlocked) || hitBall) {
-                    completeWall(hitBall);
-                }
-            }
+                return true; // Keep in array
+            });
         }
         
         function checkBallCollision(wall) {
@@ -501,11 +547,10 @@
             });
         }
         
-        function completeWall(hitBall) {
+        function completeWall(wall, hitBall) {
             if (hitBall) {
                 game.lives--;
                 showMessage('Hit by ball! Lost a life!');
-                game.buildingWall = null;
                 updateUI();
                 
                 if (game.lives <= 0) {
@@ -513,7 +558,6 @@
                     return;
                 }
             } else {
-                const wall = game.buildingWall;
                 const wallBody = Bodies.rectangle(
                     wall.x + wall.width / 2,
                     wall.y + wall.height / 2,
@@ -530,8 +574,6 @@
                 
                 World.add(world, wallBody);
                 game.completedWalls.push(wallBody);
-                game.wallsLeft--;
-                game.buildingWall = null;
                 
                 // Calculate filled percent and create falling sections
                 const filledPercent = calculateFilledPercent();
@@ -542,7 +584,7 @@
                     return;
                 }
                 
-                if (game.wallsLeft <= 0) {
+                if (game.wallsLeft <= 0 && game.buildingWalls.length === 0) {
                     showMessage('No walls left!');
                     setTimeout(() => {
                         game.lives--;
@@ -721,10 +763,11 @@
                 floodFill(col, row, accessible);
                 const ballArea = accessible.size;
                 
-                // Speed is inversely proportional to area
-                // Full area = base speed, half area = 2x speed, quarter area = 4x speed, etc.
-                const areaRatio = Math.max(ballArea / totalArea, 0.01); // Prevent division by zero
-                const speedMultiplier = 1 / areaRatio; // Direct inverse relationship
+                // Speed increases gradually as area decreases
+                // Uses squared formula for gentle start, stronger acceleration at small areas
+                const areaRatio = Math.max(ballArea / totalArea, 0.01);
+                const reduction = 1 - areaRatio; // How much area is gone (0 to 1)
+                const speedMultiplier = 1 + (reduction * reduction * 3); // Max ~4x at very small areas
                 
                 // Update ball speed
                 ball.speed = ball.baseSpeed * speedMultiplier;
@@ -743,221 +786,156 @@
             game.balls.forEach(ball => {
                 const pos = ball.body.position;
                 const radius = ball.body.circleRadius;
-                const buffer = 3;
                 
-                // Adaptive substeps based on speed - faster balls get more substeps
+                // Simple movement
+                let x = pos.x + ball.vx;
+                let y = pos.y + ball.vy;
+                
+                // Boundary collisions with reflection
+                if (x - radius < 0) {
+                    x = radius;
+                    ball.vx = Math.abs(ball.vx);
+                } else if (x + radius > canvas.width) {
+                    x = canvas.width - radius;
+                    ball.vx = -Math.abs(ball.vx);
+                }
+                
+                if (y - radius < 0) {
+                    y = radius;
+                    ball.vy = Math.abs(ball.vy);
+                } else if (y + radius > canvas.height) {
+                    y = canvas.height - radius;
+                    ball.vy = -Math.abs(ball.vy);
+                }
+                
+                // Ball-to-ball collisions (with limited separation to prevent escaping)
+                for (let j = 0; j < game.balls.length; j++) {
+                    const otherBall = game.balls[j];
+                    if (otherBall === ball) continue;
+                    
+                    const otherPos = otherBall.body.position;
+                    const dx = x - otherPos.x;
+                    const dy = y - otherPos.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const minDist = radius * 2;
+                    
+                    if (distance < minDist && distance > 0.1) {
+                        // Only create effect once per collision (check if not already created this frame)
+                        if (!ball.collisionCooldown) {
+                            const collisionX = (x + otherPos.x) / 2;
+                            const collisionY = (y + otherPos.y) / 2;
+                            createCollisionEffect(collisionX, collisionY, ball.color, otherBall.color);
+                            ball.collisionCooldown = true;
+                            setTimeout(() => ball.collisionCooldown = false, 100);
+                        }
+                        
+                        // Separate balls with limited displacement
+                        const overlap = minDist - distance;
+                        const nx = dx / distance;
+                        const ny = dy / distance;
+                        const separation = Math.min(overlap / 2, 2); // Limit separation to 2 pixels max
+                        x += nx * separation;
+                        y += ny * separation;
+                        
+                        // Elastic collision response
+                        const dvx = ball.vx - otherBall.vx;
+                        const dvy = ball.vy - otherBall.vy;
+                        const dotProduct = dvx * nx + dvy * ny;
+                        
+                        if (dotProduct < 0) {
+                            ball.vx -= dotProduct * nx;
+                            ball.vy -= dotProduct * ny;
+                        }
+                    }
+                }
+                
+                // Clamp to boundaries after ball collision (prevent escaping)
+                x = Math.max(radius, Math.min(canvas.width - radius, x));
+                y = Math.max(radius, Math.min(canvas.height - radius, y));
+                
+                // Wall collisions - simple overlap check
+                for (const wall of game.completedWalls) {
+                    const bounds = wall.bounds;
+                    const wallWidth = bounds.max.x - bounds.min.x;
+                    const wallHeight = bounds.max.y - bounds.min.y;
+                    
+                    // Check if ball overlaps wall
+                    if (x + radius > bounds.min.x && x - radius < bounds.max.x &&
+                        y + radius > bounds.min.y && y - radius < bounds.max.y) {
+                        
+                        // Mark wall as hit
+                        wall.hitTime = Date.now();
+                        
+                        // Determine wall orientation and reflect
+                        if (wallWidth > wallHeight) {
+                            // Horizontal wall
+                            if (ball.vy > 0) {
+                                y = bounds.min.y - radius;
+                            } else {
+                                y = bounds.max.y + radius;
+                            }
+                            ball.vy = -ball.vy;
+                        } else {
+                            // Vertical wall
+                            if (ball.vx > 0) {
+                                x = bounds.min.x - radius;
+                            } else {
+                                x = bounds.max.x + radius;
+                            }
+                            ball.vx = -ball.vx;
+                        }
+                    }
+                }
+                
+                // Maintain constant speed
                 const currentSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                const substeps = Math.max(3, Math.ceil(currentSpeed / 2)); // More steps for faster balls
-                
-                let x = pos.x;
-                let y = pos.y;
-                
-                const stepVx = ball.vx / substeps;
-                const stepVy = ball.vy / substeps;
-                
-                let bouncedThisFrame = false;
-                
-                for (let step = 0; step < substeps; step++) {
-                    const oldX = x;
-                    const oldY = y;
-                    
-                    // Move X axis
-                    x += stepVx;
-                    
-                    // Boundary check X - STRICT with push-away
-                    if (x - radius <= 0) {
-                        x = radius + buffer;
-                        if (!bouncedThisFrame) {
-                            // Ensure strong bounce away from wall
-                            const perpComponent = ball.speed * 0.6; // 60% perpendicular
-                            const parallelComponent = ball.speed * 0.8; // 80% parallel
-                            ball.vx = perpComponent;
-                            ball.vy = (ball.vy >= 0 ? 1 : -1) * parallelComponent;
-                            // Normalize
-                            const mag = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                            ball.vx = (ball.vx / mag) * ball.speed;
-                            ball.vy = (ball.vy / mag) * ball.speed;
-                            bouncedThisFrame = true;
-                        }
-                    } else if (x + radius >= canvas.width) {
-                        x = canvas.width - radius - buffer;
-                        if (!bouncedThisFrame) {
-                            const perpComponent = ball.speed * 0.6;
-                            const parallelComponent = ball.speed * 0.8;
-                            ball.vx = -perpComponent;
-                            ball.vy = (ball.vy >= 0 ? 1 : -1) * parallelComponent;
-                            const mag = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                            ball.vx = (ball.vx / mag) * ball.speed;
-                            ball.vy = (ball.vy / mag) * ball.speed;
-                            bouncedThisFrame = true;
-                        }
-                    }
-                    
-                    // Wall collision X with continuous detection
-                    if (!bouncedThisFrame) {
-                        for (const wall of game.completedWalls) {
-                            const bounds = wall.bounds;
-                            const wallWidth = bounds.max.x - bounds.min.x;
-                            const wallHeight = bounds.max.y - bounds.min.y;
-                            
-                            if (wallWidth < wallHeight) { // Vertical wall
-                                const wallLeft = bounds.min.x;
-                                const wallRight = bounds.max.x;
-                                const wallTop = bounds.min.y;
-                                const wallBottom = bounds.max.y;
-                                
-                                if (y + radius > wallTop && y - radius < wallBottom) {
-                                    if ((oldX + radius <= wallLeft && x + radius > wallLeft) ||
-                                        (oldX - radius >= wallRight && x - radius < wallRight) ||
-                                        (x + radius > wallLeft && x - radius < wallRight)) {
-                                        if (ball.vx > 0) {
-                                            x = wallLeft - radius - buffer;
-                                        } else {
-                                            x = wallRight + radius + buffer;
-                                        }
-                                        ball.vx = -ball.vx;
-                                        const perpComponent = ball.speed * 0.5;
-                                        const parallelComponent = ball.speed * 0.87;
-                                        ball.vx = (ball.vx >= 0 ? 1 : -1) * perpComponent;
-                                        ball.vy = (ball.vy >= 0 ? 1 : -1) * parallelComponent;
-                                        const mag = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                                        ball.vx = (ball.vx / mag) * ball.speed;
-                                        ball.vy = (ball.vy / mag) * ball.speed;
-                                        bouncedThisFrame = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Clamp X strictly
-                    x = Math.max(radius + buffer, Math.min(canvas.width - radius - buffer, x));
-                    
-                    // Move Y axis
-                    y += stepVy;
-                    
-                    // Boundary check Y - STRICT with push-away
-                    if (y - radius <= 0) {
-                        y = radius + buffer;
-                        if (!bouncedThisFrame) {
-                            const perpComponent = ball.speed * 0.6;
-                            const parallelComponent = ball.speed * 0.8;
-                            ball.vx = (ball.vx >= 0 ? 1 : -1) * parallelComponent;
-                            ball.vy = perpComponent;
-                            const mag = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                            ball.vx = (ball.vx / mag) * ball.speed;
-                            ball.vy = (ball.vy / mag) * ball.speed;
-                            bouncedThisFrame = true;
-                        }
-                    } else if (y + radius >= canvas.height) {
-                        y = canvas.height - radius - buffer;
-                        if (!bouncedThisFrame) {
-                            const perpComponent = ball.speed * 0.6;
-                            const parallelComponent = ball.speed * 0.8;
-                            ball.vx = (ball.vx >= 0 ? 1 : -1) * parallelComponent;
-                            ball.vy = -perpComponent;
-                            const mag = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                            ball.vx = (ball.vx / mag) * ball.speed;
-                            ball.vy = (ball.vy / mag) * ball.speed;
-                            bouncedThisFrame = true;
-                        }
-                    }
-                    
-                    // Wall collision Y with continuous detection
-                    if (!bouncedThisFrame) {
-                        for (const wall of game.completedWalls) {
-                            const bounds = wall.bounds;
-                            const wallWidth = bounds.max.x - bounds.min.x;
-                            const wallHeight = bounds.max.y - bounds.min.y;
-                            
-                            if (wallWidth > wallHeight) { // Horizontal wall
-                                const wallLeft = bounds.min.x;
-                                const wallRight = bounds.max.x;
-                                const wallTop = bounds.min.y;
-                                const wallBottom = bounds.max.y;
-                                
-                                if (x + radius > wallLeft && x - radius < wallRight) {
-                                    if ((oldY + radius <= wallTop && y + radius > wallTop) ||
-                                        (oldY - radius >= wallBottom && y - radius < wallBottom) ||
-                                        (y + radius > wallTop && y - radius < wallBottom)) {
-                                        if (ball.vy > 0) {
-                                            y = wallTop - radius - buffer;
-                                        } else {
-                                            y = wallBottom + radius + buffer;
-                                        }
-                                        ball.vy = -ball.vy;
-                                        const perpComponent = ball.speed * 0.5;
-                                        const parallelComponent = ball.speed * 0.87;
-                                        ball.vx = (ball.vx >= 0 ? 1 : -1) * parallelComponent;
-                                        ball.vy = (ball.vy >= 0 ? 1 : -1) * perpComponent;
-                                        const mag = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                                        ball.vx = (ball.vx / mag) * ball.speed;
-                                        ball.vy = (ball.vy / mag) * ball.speed;
-                                        bouncedThisFrame = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Clamp Y strictly
-                    y = Math.max(radius + buffer, Math.min(canvas.height - radius - buffer, y));
-                }
-                
-                // Normalize speed to match target
-                const finalSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                if (finalSpeed > 0.1) {
-                    ball.vx = (ball.vx / finalSpeed) * ball.speed;
-                    ball.vy = (ball.vy / finalSpeed) * ball.speed;
-                }
-                
-                // Final strict boundary enforcement
-                x = Math.max(radius + buffer, Math.min(canvas.width - radius - buffer, x));
-                y = Math.max(radius + buffer, Math.min(canvas.height - radius - buffer, y));
-                
-                // Detect and prevent wall riding
-                const distToLeft = x - radius;
-                const distToRight = canvas.width - x - radius;
-                const distToTop = y - radius;
-                const distToBottom = canvas.height - y - radius;
-                const wallProximity = 5; // Pixels
-                
-                // Check if hugging left/right wall and moving mostly parallel
-                if (distToLeft < wallProximity || distToRight < wallProximity) {
-                    const absVx = Math.abs(ball.vx);
-                    const absVy = Math.abs(ball.vy);
-                    // If moving more vertically than horizontally (riding the wall)
-                    if (absVy > absVx * 1.5) {
-                        // Force away from wall with strong horizontal component
-                        const direction = distToLeft < wallProximity ? 1 : -1;
-                        ball.vx = direction * ball.speed * 0.7;
-                        ball.vy = (ball.vy >= 0 ? 1 : -1) * ball.speed * 0.7;
-                        // Push away from wall
-                        if (distToLeft < wallProximity) x = radius + buffer + 2;
-                        if (distToRight < wallProximity) x = canvas.width - radius - buffer - 2;
-                    }
-                }
-                
-                // Check if hugging top/bottom wall and moving mostly parallel
-                if (distToTop < wallProximity || distToBottom < wallProximity) {
-                    const absVx = Math.abs(ball.vx);
-                    const absVy = Math.abs(ball.vy);
-                    // If moving more horizontally than vertically (riding the wall)
-                    if (absVx > absVy * 1.5) {
-                        // Force away from wall with strong vertical component
-                        const direction = distToTop < wallProximity ? 1 : -1;
-                        ball.vx = (ball.vx >= 0 ? 1 : -1) * ball.speed * 0.7;
-                        ball.vy = direction * ball.speed * 0.7;
-                        // Push away from wall
-                        if (distToTop < wallProximity) y = radius + buffer + 2;
-                        if (distToBottom < wallProximity) y = canvas.height - radius - buffer - 2;
-                    }
+                if (currentSpeed > 0) {
+                    ball.vx = (ball.vx / currentSpeed) * ball.speed;
+                    ball.vy = (ball.vy / currentSpeed) * ball.speed;
                 }
                 
                 // Update position
                 Body.setPosition(ball.body, { x, y });
+            });
+        }
+        
+        function createCollisionEffect(x, y, color1, color2) {
+            // Create sparkle particles at collision point
+            const particleCount = 12;
+            for (let i = 0; i < particleCount; i++) {
+                const angle = (Math.PI * 2 * i) / particleCount;
+                const speed = 2 + Math.random() * 3;
+                game.collisionEffects.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1.0,
+                    color: i % 2 === 0 ? color1 : color2,
+                    size: 3 + Math.random() * 3
+                });
+            }
+            
+            // Add a bright flash at the center
+            game.collisionEffects.push({
+                x: x,
+                y: y,
+                vx: 0,
+                vy: 0,
+                life: 1.0,
+                color: '#ffffff',
+                size: 15,
+                isFlash: true
+            });
+        }
+        
+        function updateCollisionEffects() {
+            game.collisionEffects = game.collisionEffects.filter(effect => {
+                effect.x += effect.vx;
+                effect.y += effect.vy;
+                effect.life -= 0.05;
+                effect.size *= 0.95;
+                return effect.life > 0;
             });
         }
         
@@ -967,7 +945,7 @@
                 ball.trail.push({ x: pos.x, y: pos.y });
                 
                 const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                const maxTrailLength = Math.floor(15 + speed * 5); // Longer trails at higher speeds
+                const maxTrailLength = Math.floor(8 + speed * 2); // Shorter trails for better performance
                 
                 if (ball.trail.length > maxTrailLength) {
                     ball.trail.shift();
@@ -1056,11 +1034,24 @@
             }
             
             // Draw completed walls
-            ctx.fillStyle = '#9333ea';
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#9333ea';
             game.completedWalls.forEach(wall => {
                 const bounds = wall.bounds;
+                const now = Date.now();
+                const timeSinceHit = wall.hitTime ? now - wall.hitTime : 9999;
+                const blinkDuration = 200; // milliseconds
+                
+                // Determine color based on hit time
+                if (timeSinceHit < blinkDuration) {
+                    const progress = timeSinceHit / blinkDuration;
+                    ctx.fillStyle = '#10b981'; // Green
+                    ctx.shadowColor = '#10b981';
+                    ctx.shadowBlur = 15 * (1 - progress); // Fade shadow
+                } else {
+                    ctx.fillStyle = '#9333ea'; // Purple
+                    ctx.shadowColor = '#9333ea';
+                    ctx.shadowBlur = 10;
+                }
+                
                 ctx.fillRect(
                     bounds.min.x,
                     bounds.min.y,
@@ -1069,13 +1060,12 @@
                 );
             });
             
-            // Draw building wall
-            if (game.buildingWall) {
-                ctx.fillStyle = '#ec4899';
-                ctx.shadowColor = '#ec4899';
-                const w = game.buildingWall;
-                ctx.fillRect(w.x, w.y, w.width, w.height);
-            }
+            // Draw building walls
+            ctx.fillStyle = '#ec4899';
+            ctx.shadowColor = '#ec4899';
+            game.buildingWalls.forEach(wall => {
+                ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+            });
             
             ctx.shadowBlur = 0;
             
@@ -1113,23 +1103,33 @@
                     
                     for (let i = 1; i < ball.trail.length; i++) {
                         const progress = i / ball.trail.length;
-                        const alpha = progress * 0.8;
+                        const alpha = progress * 0.4;
                         
-                        // Draw outer glow
+                        // Draw outer glow (wider, more intense)
                         ctx.strokeStyle = ball.color;
                         ctx.globalAlpha = alpha * 0.3;
-                        ctx.lineWidth = 6;
-                        ctx.shadowBlur = 15;
+                        ctx.lineWidth = 12;
+                        ctx.shadowBlur = 30;
                         ctx.shadowColor = ball.color;
                         ctx.beginPath();
                         ctx.moveTo(ball.trail[i - 1].x, ball.trail[i - 1].y);
                         ctx.lineTo(ball.trail[i].x, ball.trail[i].y);
                         ctx.stroke();
                         
-                        // Draw bright core
-                        ctx.globalAlpha = alpha;
-                        ctx.lineWidth = 3;
-                        ctx.shadowBlur = 8;
+                        // Draw bright core (wider, brighter)
+                        ctx.globalAlpha = alpha * 0.6;
+                        ctx.lineWidth = 6;
+                        ctx.shadowBlur = 20;
+                        ctx.beginPath();
+                        ctx.moveTo(ball.trail[i - 1].x, ball.trail[i - 1].y);
+                        ctx.lineTo(ball.trail[i].x, ball.trail[i].y);
+                        ctx.stroke();
+                        
+                        // Add extra bright center line
+                        ctx.globalAlpha = alpha * 0.7;
+                        ctx.lineWidth = 2;
+                        ctx.shadowBlur = 10;
+                        ctx.strokeStyle = '#ffffff';
                         ctx.beginPath();
                         ctx.moveTo(ball.trail[i - 1].x, ball.trail[i - 1].y);
                         ctx.lineTo(ball.trail[i].x, ball.trail[i].y);
@@ -1138,6 +1138,39 @@
                     
                     ctx.restore();
                 }
+            });
+            
+            // Draw collision effects
+            game.collisionEffects.forEach(effect => {
+                ctx.save();
+                ctx.globalAlpha = effect.life;
+                
+                if (effect.isFlash) {
+                    // Bright flash at center
+                    ctx.shadowBlur = 30;
+                    ctx.shadowColor = effect.color;
+                    ctx.fillStyle = effect.color;
+                    ctx.beginPath();
+                    ctx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // Sparkle particles
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = effect.color;
+                    ctx.fillStyle = effect.color;
+                    ctx.beginPath();
+                    ctx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add white core to sparkles
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowBlur = 5;
+                    ctx.beginPath();
+                    ctx.arc(effect.x, effect.y, effect.size * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
             });
             
             // Draw balls
@@ -1247,6 +1280,7 @@
                 updateBuildingWall();
                 updateFallingSections();
                 updateBallTrails();
+                updateCollisionEffects();
                 draw();
             }
             
@@ -1282,28 +1316,41 @@
         });
         
         canvas.addEventListener('click', e => {
-            if (!game.isRunning || game.isPaused || game.buildingWall || game.wallsLeft <= 0) return;
+            if (!game.isRunning || game.isPaused || game.wallsLeft <= 0) return;
             
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             
+            // Check if click is in a fallen area
+            const col = Math.floor(x / GRID_SIZE);
+            const row = Math.floor(y / GRID_SIZE);
+            const key = `${col},${row}`;
+            
+            if (game.permanentlyFilled.has(key)) {
+                showMessage('Cannot place wall in fallen area!');
+                return;
+            }
+            
+            game.wallsLeft--;
+            updateUI();
+            
             if (wallDirection === 'horizontal') {
-                game.buildingWall = {
+                game.buildingWalls.push({
                     x: x,
                     y: y - WALL_THICKNESS / 2,
                     width: 0,
                     height: WALL_THICKNESS,
                     direction: 'horizontal'
-                };
+                });
             } else {
-                game.buildingWall = {
+                game.buildingWalls.push({
                     x: x - WALL_THICKNESS / 2,
                     y: y,
                     width: WALL_THICKNESS,
                     height: 0,
                     direction: 'vertical'
-                };
+                });
             }
         });
         
