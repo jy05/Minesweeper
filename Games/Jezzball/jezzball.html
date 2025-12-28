@@ -259,6 +259,26 @@
             color: #ec4899;
             line-height: 1.4;
         }
+        .splash-back-button {
+            margin-top: 30px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 11px;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(147, 51, 234, 0.6);
+            color: #ec4899;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            max-width: 300px;
+        }
+        .splash-back-button:hover {
+            background: rgba(147, 51, 234, 0.3);
+            border-color: #ec4899;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
+        }
         @keyframes titleGlow {
             0%, 100% { text-shadow: 0 0 20px rgba(236, 72, 153, 0.8), 0 0 40px rgba(147, 51, 234, 0.6), 4px 4px 0 rgba(147, 51, 234, 0.8); }
             50% { text-shadow: 0 0 30px rgba(236, 72, 153, 1), 0 0 60px rgba(147, 51, 234, 0.8), 4px 4px 0 rgba(147, 51, 234, 0.8); }
@@ -295,6 +315,7 @@
                     <span class="mode-desc">Unlimited continues, endless fun!</span>
                 </button>
             </div>
+            <button class="splash-back-button" onclick="window.location.href='../games.html'">← Back to Games</button>
         </div>
     </div>
     
