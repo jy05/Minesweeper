@@ -409,7 +409,8 @@
             slowMotionActive: false,
             slowMotionEndTime: 0,
             electronBeamActive: false,
-            electronBeamStart: null
+            electronBeamStart: null,
+            shatterEffects: [] // Wall destruction particles
         };
         
         let wallDirection = 'horizontal';
@@ -664,12 +665,16 @@
                     } else {
                         // Normal walls - check for hits and destruction
                         if (hitBall) {
-                            // Track hit time for wall destruction logic
+                            // Track which ball hit and the time for wall destruction logic
                             if (!wall.firstHitTime) {
                                 wall.firstHitTime = Date.now();
-                            } else if (Date.now() - wall.firstHitTime < 200) {
-                                // Two hits within 200ms (green blink duration) - destroy wall
-                                game.wallsLeft++; // Refund the wall
+                                wall.firstHitBall = hitBall; // Store reference to the ball that hit first
+                            } else if (Date.now() - wall.firstHitTime < 200 && wall.firstHitBall !== hitBall) {
+                                // Two hits within 200ms (green blink duration) by DIFFERENT balls - destroy wall
+                                createShatterEffect(wall);
+                                if (game.gameMode === 'survival') {
+                                    game.wallsLeft++; // Refund the wall in Survival mode
+                                }
                                 showMessage('💥 Wall destroyed by double hit!');
                                 updateUI();
                                 return false; // Remove from array
@@ -778,12 +783,16 @@
                     } else {
                         // Normal walls - check for hits and destruction
                         if (hitBall) {
-                            // Track hit time for wall destruction logic
+                            // Track which ball hit and the time for wall destruction logic
                             if (!wall.firstHitTime) {
                                 wall.firstHitTime = Date.now();
-                            } else if (Date.now() - wall.firstHitTime < 200) {
-                                // Two hits within 200ms (green blink duration) - destroy wall
-                                game.wallsLeft++; // Refund the wall
+                                wall.firstHitBall = hitBall; // Store reference to the ball that hit first
+                            } else if (Date.now() - wall.firstHitTime < 200 && wall.firstHitBall !== hitBall) {
+                                // Two hits within 200ms (green blink duration) by DIFFERENT balls - destroy wall
+                                createShatterEffect(wall);
+                                if (game.gameMode === 'survival') {
+                                    game.wallsLeft++; // Refund the wall in Survival mode
+                                }
                                 showMessage('💥 Wall destroyed by double hit!');
                                 updateUI();
                                 return false; // Remove from array
@@ -802,12 +811,16 @@
         }
         
         function checkBallCollision(wall) {
-            return game.balls.some(ball => {
+            // Return the ball that collided, or null if no collision
+            for (let ball of game.balls) {
                 const pos = ball.body.position;
                 const radius = ball.body.circleRadius;
-                return pos.x + radius > wall.x && pos.x - radius < wall.x + wall.width &&
-                       pos.y + radius > wall.y && pos.y - radius < wall.y + wall.height;
-            });
+                if (pos.x + radius > wall.x && pos.x - radius < wall.x + wall.width &&
+                    pos.y + radius > wall.y && pos.y - radius < wall.y + wall.height) {
+                    return ball;
+                }
+            }
+            return null;
         }
         
         function completeWall(wall, hitBall) {
@@ -1301,6 +1314,39 @@
             });
         }
         
+        function createShatterEffect(wall) {
+            // Create particles from the wall
+            const particleCount = 20;
+            const centerX = wall.x + wall.width / 2;
+            const centerY = wall.y + wall.height / 2;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 4;
+                game.shatterEffects.push({
+                    x: centerX + (Math.random() - 0.5) * wall.width,
+                    y: centerY + (Math.random() - 0.5) * wall.height,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: 3 + Math.random() * 4,
+                    life: 1.0,
+                    rotation: Math.random() * Math.PI * 2,
+                    rotationSpeed: (Math.random() - 0.5) * 0.3
+                });
+            }
+        }
+        
+        function updateShatterEffects() {
+            game.shatterEffects = game.shatterEffects.filter(effect => {
+                effect.x += effect.vx;
+                effect.y += effect.vy;
+                effect.vy += 0.3; // Gravity
+                effect.rotation += effect.rotationSpeed;
+                effect.life -= 0.02;
+                return effect.life > 0;
+            });
+        }
+        
         function updateBallTrails() {
             game.balls.forEach(ball => {
                 const pos = ball.body.position;
@@ -1535,6 +1581,22 @@
                 ctx.restore();
             });
             
+            // Draw shatter effects
+            game.shatterEffects.forEach(effect => {
+                ctx.save();
+                ctx.globalAlpha = effect.life;
+                ctx.translate(effect.x, effect.y);
+                ctx.rotate(effect.rotation);
+                
+                // Green shard with glow
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#4ade80';
+                ctx.fillStyle = '#4ade80';
+                ctx.fillRect(-effect.size/2, -effect.size/2, effect.size, effect.size);
+                
+                ctx.restore();
+            });
+            
             // Draw balls
             game.balls.forEach(ball => {
                 const pos = ball.body.position;
@@ -1653,6 +1715,7 @@
                 updateFallingSections();
                 updateBallTrails();
                 updateCollisionEffects();
+                updateShatterEffects();
                 draw();
             }
             
