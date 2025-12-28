@@ -1120,8 +1120,11 @@
                     const pos = ball.body.position;
                     const radius = ball.body.circleRadius;
                     const bounds = wall.bounds;
-                    if (pos.x + radius > bounds.min.x && pos.x - radius < bounds.max.x &&
-                        pos.y + radius > bounds.min.y && pos.y - radius < bounds.max.y) {
+                    
+                    // More precise collision detection - check if ball center is within wall bounds + radius
+                    const margin = radius + 2; // Add small margin for better detection
+                    if (pos.x + margin > bounds.min.x && pos.x - margin < bounds.max.x &&
+                        pos.y + margin > bounds.min.y && pos.y - margin < bounds.max.y) {
                         hitBall = ball;
                         break;
                     }
@@ -1132,35 +1135,50 @@
                     if (!wall.firstHitTime) {
                         wall.firstHitTime = Date.now();
                         wall.firstHitBall = hitBall;
-                    } else if (Date.now() - wall.firstHitTime < 200 && wall.firstHitBall !== hitBall) {
-                        // Two hits within 200ms by DIFFERENT balls - destroy wall
-                        createShatterEffect({
-                            x: wall.bounds.min.x,
-                            y: wall.bounds.min.y,
-                            width: wall.bounds.max.x - wall.bounds.min.x,
-                            height: wall.bounds.max.y - wall.bounds.min.y
-                        });
+                        console.log('Wall hit by first ball');
+                    } else if (wall.firstHitBall !== hitBall) {
+                        // Different ball hit - check if within time window
+                        const timeSinceFirstHit = Date.now() - wall.firstHitTime;
+                        console.log('Different ball hit! Time since first:', timeSinceFirstHit + 'ms');
                         
-                        // Remove wall from physics world
-                        World.remove(world, wall);
-                        
-                        // Clear cells from permanentlyFilled
-                        const bounds = wall.bounds;
-                        for (let x = Math.floor(bounds.min.x / GRID_SIZE); x < Math.ceil(bounds.max.x / GRID_SIZE); x++) {
-                            for (let y = Math.floor(bounds.min.y / GRID_SIZE); y < Math.ceil(bounds.max.y / GRID_SIZE); y++) {
-                                game.permanentlyFilled.delete(`${x},${y}`);
+                        if (timeSinceFirstHit < 200) {
+                            // Two hits within 200ms by DIFFERENT balls - destroy wall
+                            console.log('DESTROYING WALL!');
+                            createShatterEffect({
+                                x: wall.bounds.min.x,
+                                y: wall.bounds.min.y,
+                                width: wall.bounds.max.x - wall.bounds.min.x,
+                                height: wall.bounds.max.y - wall.bounds.min.y
+                            });
+                            
+                            // Remove wall from physics world
+                            World.remove(world, wall);
+                            
+                            // Clear cells from permanentlyFilled
+                            const bounds = wall.bounds;
+                            for (let x = Math.floor(bounds.min.x / GRID_SIZE); x < Math.ceil(bounds.max.x / GRID_SIZE); x++) {
+                                for (let y = Math.floor(bounds.min.y / GRID_SIZE); y < Math.ceil(bounds.max.y / GRID_SIZE); y++) {
+                                    game.permanentlyFilled.delete(`${x},${y}`);
+                                }
                             }
+                            
+                            if (game.gameMode === 'survival') {
+                                game.wallsLeft++; // Refund the wall in Survival mode
+                            }
+                            showMessage('💥 Completed wall destroyed by double hit!');
+                            updateUI();
+                            return false; // Remove from array
+                        } else {
+                            // Time window expired, reset tracking with new ball
+                            wall.firstHitTime = Date.now();
+                            wall.firstHitBall = hitBall;
+                            console.log('Time expired, tracking new ball as first hit');
                         }
-                        
-                        if (game.gameMode === 'survival') {
-                            game.wallsLeft++; // Refund the wall in Survival mode
-                        }
-                        showMessage('💥 Completed wall destroyed by double hit!');
-                        updateUI();
-                        return false; // Remove from array
                     }
-                } else {
-                    // Reset hit tracking if no ball is touching
+                }
+                
+                // Reset tracking if time window expired (200ms passed)
+                if (wall.firstHitTime && Date.now() - wall.firstHitTime > 200) {
                     wall.firstHitTime = null;
                     wall.firstHitBall = null;
                 }
