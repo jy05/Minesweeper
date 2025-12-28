@@ -682,24 +682,7 @@
                             return false; // Remove from array
                         }
                     } else {
-                        // Normal walls - check for hits and destruction
-                        if (hitBall) {
-                            // Track which ball hit and the time for wall destruction logic
-                            if (!wall.firstHitTime) {
-                                wall.firstHitTime = Date.now();
-                                wall.firstHitBall = hitBall; // Store reference to the ball that hit first
-                            } else if (Date.now() - wall.firstHitTime < 200 && wall.firstHitBall !== hitBall) {
-                                // Two hits within 200ms (green blink duration) by DIFFERENT balls - destroy wall
-                                createShatterEffect(wall);
-                                if (game.gameMode === 'survival') {
-                                    game.wallsLeft++; // Refund the wall in Survival mode
-                                }
-                                showMessage('💥 Wall destroyed by double hit!');
-                                updateUI();
-                                return false; // Remove from array
-                            }
-                        }
-                        
+                        // Normal walls - building walls are destroyed immediately when hit
                         if ((leftBlocked && rightBlocked) || hitBall) {
                             completeWall(wall, hitBall);
                             return false; // Remove from array
@@ -800,24 +783,7 @@
                             return false; // Remove from array
                         }
                     } else {
-                        // Normal walls - check for hits and destruction
-                        if (hitBall) {
-                            // Track which ball hit and the time for wall destruction logic
-                            if (!wall.firstHitTime) {
-                                wall.firstHitTime = Date.now();
-                                wall.firstHitBall = hitBall; // Store reference to the ball that hit first
-                            } else if (Date.now() - wall.firstHitTime < 200 && wall.firstHitBall !== hitBall) {
-                                // Two hits within 200ms (green blink duration) by DIFFERENT balls - destroy wall
-                                createShatterEffect(wall);
-                                if (game.gameMode === 'survival') {
-                                    game.wallsLeft++; // Refund the wall in Survival mode
-                                }
-                                showMessage('💥 Wall destroyed by double hit!');
-                                updateUI();
-                                return false; // Remove from array
-                            }
-                        }
-                        
+                        // Normal walls - building walls are destroyed immediately when hit
                         if ((topBlocked && bottomBlocked) || hitBall) {
                             completeWall(wall, hitBall);
                             return false; // Remove from array
@@ -1142,6 +1108,64 @@
                     ball.vx *= ratio;
                     ball.vy *= ratio;
                 }
+            });
+        }
+        
+        function updateCompletedWalls() {
+            // Check for double-hits on completed walls
+            game.completedWalls = game.completedWalls.filter(wall => {
+                // Check if any ball is colliding with this wall
+                let hitBall = null;
+                for (let ball of game.balls) {
+                    const pos = ball.body.position;
+                    const radius = ball.body.circleRadius;
+                    const bounds = wall.bounds;
+                    if (pos.x + radius > bounds.min.x && pos.x - radius < bounds.max.x &&
+                        pos.y + radius > bounds.min.y && pos.y - radius < bounds.max.y) {
+                        hitBall = ball;
+                        break;
+                    }
+                }
+                
+                if (hitBall) {
+                    // Track which ball hit and the time for wall destruction logic
+                    if (!wall.firstHitTime) {
+                        wall.firstHitTime = Date.now();
+                        wall.firstHitBall = hitBall;
+                    } else if (Date.now() - wall.firstHitTime < 200 && wall.firstHitBall !== hitBall) {
+                        // Two hits within 200ms by DIFFERENT balls - destroy wall
+                        createShatterEffect({
+                            x: wall.bounds.min.x,
+                            y: wall.bounds.min.y,
+                            width: wall.bounds.max.x - wall.bounds.min.x,
+                            height: wall.bounds.max.y - wall.bounds.min.y
+                        });
+                        
+                        // Remove wall from physics world
+                        World.remove(world, wall);
+                        
+                        // Clear cells from permanentlyFilled
+                        const bounds = wall.bounds;
+                        for (let x = Math.floor(bounds.min.x / GRID_SIZE); x < Math.ceil(bounds.max.x / GRID_SIZE); x++) {
+                            for (let y = Math.floor(bounds.min.y / GRID_SIZE); y < Math.ceil(bounds.max.y / GRID_SIZE); y++) {
+                                game.permanentlyFilled.delete(`${x},${y}`);
+                            }
+                        }
+                        
+                        if (game.gameMode === 'survival') {
+                            game.wallsLeft++; // Refund the wall in Survival mode
+                        }
+                        showMessage('💥 Completed wall destroyed by double hit!');
+                        updateUI();
+                        return false; // Remove from array
+                    }
+                } else {
+                    // Reset hit tracking if no ball is touching
+                    wall.firstHitTime = null;
+                    wall.firstHitBall = null;
+                }
+                
+                return true; // Keep wall
             });
         }
         
@@ -1731,6 +1755,7 @@
                 updateBallSpeeds();
                 updateBallPhysics();
                 updateBuildingWall();
+                updateCompletedWalls();
                 updateFallingSections();
                 updateBallTrails();
                 updateCollisionEffects();
