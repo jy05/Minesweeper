@@ -298,9 +298,10 @@
         </div>
     </div>
     
-    <div class="game-container">
+    <div class="game-container" id="gameContainer" style="display: none;">
         <h1>Jezzball</h1>
         <div class="game-info">
+            <div class="info-item">Mode: <span class="info-value" id="gameMode">Normal</span></div>
             <div class="info-item">Level: <span class="info-value" id="level">1</span></div>
             <div class="info-item">Lives: <span class="info-value" id="lives">5</span></div>
             <div class="info-item">Walls: <span class="info-value" id="walls">7</span></div>
@@ -536,6 +537,15 @@
         }
         
         function updateUI() {
+            // Update mode display
+            const modeNames = {
+                'normal': 'Normal',
+                'timeattack': 'Time Attack',
+                'survival': 'Survival',
+                'freeplay': 'Free Play'
+            };
+            document.getElementById('gameMode').textContent = modeNames[game.gameMode] || 'Normal';
+            
             document.getElementById('level').textContent = game.level;
             document.getElementById('lives').textContent = game.lives;
             
@@ -543,12 +553,21 @@
             const wallsElement = document.getElementById('walls').parentElement;
             if (game.gameMode === 'survival') {
                 document.getElementById('walls').textContent = game.wallsLeft;
+                // Reset label in case it was changed
+                const label = wallsElement.firstChild;
+                if (label.nodeType === 3) { // Text node
+                    label.textContent = 'Walls: ';
+                }
                 wallsElement.style.display = '';
             } else if (game.gameMode === 'timeattack') {
                 const minutes = Math.floor(game.timeRemaining / 60);
                 const seconds = Math.floor(game.timeRemaining % 60);
                 document.getElementById('walls').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                wallsElement.querySelector('.info-item').textContent = 'Time: ';
+                // Update label
+                const label = wallsElement.firstChild;
+                if (label.nodeType === 3) {
+                    label.textContent = 'Time: ';
+                }
                 wallsElement.style.display = '';
             } else {
                 wallsElement.style.display = 'none'; // Hide in Normal/Free Play modes
@@ -1809,19 +1828,47 @@
         function gameOver() {
             game.isRunning = false;
             
-            // Check if Second Chance is available
-            if (game.powerupsUnlocked[6] && !game.powerupsUsed[6]) {
+            // Mode-specific game over messages
+            let gameOverMessage = '💀 Game Over!';
+            if (game.gameMode === 'timeattack') {
+                gameOverMessage += '\n⏱️ Time ran out!';
+            } else if (game.gameMode === 'survival') {
+                gameOverMessage += '\n💥 Out of walls or lives!';
+            } else {
+                gameOverMessage += '\n💔 Out of lives!';
+            }
+            
+            // Check if Second Chance is available (not available in Free Play mode)
+            if (game.gameMode !== 'freeplay' && game.powerupsUnlocked[6] && !game.powerupsUsed[6]) {
                 // Offer Second Chance
-                const useSecondChance = confirm('💀 Game Over!\n\n🔄💫 You have a Second Chance available!\n\nUse it to restore your lives and restart this level?\n\n(This will consume your Second Chance power-up)');
+                const useSecondChance = confirm(`${gameOverMessage}\n\n🔄💫 You have a Second Chance available!\n\nUse it to restore your lives and restart this level?\n\n(This will consume your Second Chance power-up)`);
                 
                 if (useSecondChance) {
                     // Use Second Chance
                     game.powerupsUsed[6] = true;
                     game.lives = 5 + game.level * 2; // Full refill
+                    
+                    // In Time Attack mode, also add bonus time
+                    if (game.gameMode === 'timeattack') {
+                        game.timeRemaining += 30;
+                    }
+                    
                     game.isRunning = true;
                     updateUI();
                     updatePowerupUI();
                     showMessage('🔄💫 Second Chance activated! Lives restored!');
+                    initLevel(); // Restart level
+                    return;
+                }
+            } else if (game.gameMode === 'freeplay') {
+                // Free Play mode - offer unlimited continues
+                const continueGame = confirm(`${gameOverMessage}\n\n🎮 Free Play Mode: Continue playing?\n\n(You can restart this level as many times as you want!)`);
+                
+                if (continueGame) {
+                    game.lives = 5;
+                    game.isRunning = true;
+                    updateUI();
+                    showMessage('🎮 Continuing in Free Play mode!');
                     initLevel(); // Restart level
                     return;
                 }
@@ -1830,7 +1877,13 @@
             // No Second Chance or declined - reset power-up usage
             game.powerupsUsed = [false, false, false, false, false, false, false];
             updatePowerupUI();
-            showMessage('Game Over! Click Start to play again.');
+            
+            // Final game over message
+            if (game.gameMode === 'freeplay') {
+                showMessage('Thanks for playing! Reload to start again.');
+            } else {
+                showMessage(`Game Over! Reached Level ${game.level}. Reload to play again.`);
+            }
         }
         
         // Event listeners
