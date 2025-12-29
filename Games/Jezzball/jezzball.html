@@ -1133,7 +1133,8 @@
         }
         
         function updateCompletedWalls() {
-            // Check for hits on completed walls - red on first hit, destroy on second hit
+            // Check for double-hits on completed walls - first double-hit turns red, second double-hit breaks
+            // If 3+ different balls hit within 200ms: instant break
             game.completedWalls = game.completedWalls.filter(wall => {
                 // Check if any ball is colliding with this wall
                 let hitBall = null;
@@ -1152,36 +1153,97 @@
                 }
                 
                 if (hitBall) {
-                    // Track which ball hit and state for wall damage logic
-                    if (!wall.damageState) {
-                        // First hit - mark as damaged and turn red
-                        wall.damageState = 'damaged';
-                        wall.damageTime = Date.now();
-                        showMessage('⚠️ Wall damaged!');
-                    } else if (wall.damageState === 'damaged') {
-                        // Second hit - destroy wall (no life loss)
-                        createShatterEffect({
-                            x: wall.bounds.min.x,
-                            y: wall.bounds.min.y,
-                            width: wall.bounds.max.x - wall.bounds.min.x,
-                            height: wall.bounds.max.y - wall.bounds.min.y
-                        });
-                        
-                        // Remove wall from physics world
-                        World.remove(world, wall);
-                        
-                        // Clear cells from permanentlyFilled
-                        const bounds = wall.bounds;
-                        for (let x = Math.floor(bounds.min.x / GRID_SIZE); x < Math.ceil(bounds.max.x / GRID_SIZE); x++) {
-                            for (let y = Math.floor(bounds.min.y / GRID_SIZE); y < Math.ceil(bounds.max.y / GRID_SIZE); y++) {
-                                game.permanentlyFilled.delete(`${x},${y}`);
-                            }
-                        }
-                        
-                        showMessage('💥 Wall destroyed!');
-                        updateUI();
-                        return false; // Remove from array
+                    // Initialize hit tracking array if needed
+                    if (!wall.hitBalls) {
+                        wall.hitBalls = [];
                     }
+                    
+                    // Track which ball hit and the time for wall damage logic
+                    if (!wall.firstHitTime) {
+                        // First ball hits - start tracking
+                        wall.firstHitTime = Date.now();
+                        wall.firstHitBall = hitBall;
+                        wall.hitBalls = [hitBall];
+                        wall.hitTime = Date.now(); // For green blink effect
+                    } else if (wall.firstHitBall !== hitBall) {
+                        // Different ball hit - check if within time window
+                        const timeSinceFirstHit = Date.now() - wall.firstHitTime;
+                        
+                        if (timeSinceFirstHit < 200) {
+                            // Add to list of balls that hit this wall within window
+                            if (!wall.hitBalls.includes(hitBall)) {
+                                wall.hitBalls.push(hitBall);
+                            }
+                            
+                            // Check for 3+ different balls - instant break
+                            if (wall.hitBalls.length >= 3) {
+                                createShatterEffect({
+                                    x: wall.bounds.min.x,
+                                    y: wall.bounds.min.y,
+                                    width: wall.bounds.max.x - wall.bounds.min.x,
+                                    height: wall.bounds.max.y - wall.bounds.min.y
+                                });
+                                
+                                World.remove(world, wall);
+                                
+                                const bounds = wall.bounds;
+                                for (let x = Math.floor(bounds.min.x / GRID_SIZE); x < Math.ceil(bounds.max.x / GRID_SIZE); x++) {
+                                    for (let y = Math.floor(bounds.min.y / GRID_SIZE); y < Math.ceil(bounds.max.y / GRID_SIZE); y++) {
+                                        game.permanentlyFilled.delete(`${x},${y}`);
+                                    }
+                                }
+                                
+                                showMessage('💥💥 Wall obliterated by multiple balls!');
+                                updateUI();
+                                return false; // Remove from array
+                            }
+                            
+                            // Two different balls within 200ms
+                            if (!wall.damageState) {
+                                // First double-hit - turn RED (damaged state)
+                                wall.damageState = 'damaged';
+                                wall.damageTime = Date.now();
+                                wall.firstHitTime = null; // Reset tracking for next potential hit
+                                wall.firstHitBall = null;
+                                wall.hitBalls = [];
+                                showMessage('⚠️ Wall damaged!');
+                            } else if (wall.damageState === 'damaged') {
+                                // Second double-hit while damaged - DESTROY wall (no life loss)
+                                createShatterEffect({
+                                    x: wall.bounds.min.x,
+                                    y: wall.bounds.min.y,
+                                    width: wall.bounds.max.x - wall.bounds.min.x,
+                                    height: wall.bounds.max.y - wall.bounds.min.y
+                                });
+                                
+                                World.remove(world, wall);
+                                
+                                const bounds = wall.bounds;
+                                for (let x = Math.floor(bounds.min.x / GRID_SIZE); x < Math.ceil(bounds.max.x / GRID_SIZE); x++) {
+                                    for (let y = Math.floor(bounds.min.y / GRID_SIZE); y < Math.ceil(bounds.max.y / GRID_SIZE); y++) {
+                                        game.permanentlyFilled.delete(`${x},${y}`);
+                                    }
+                                }
+                                
+                                showMessage('💥 Wall destroyed!');
+                                updateUI();
+                                return false; // Remove from array
+                            }
+                        } else {
+                            // Time window expired, reset tracking with new ball
+                            wall.firstHitTime = Date.now();
+                            wall.firstHitBall = hitBall;
+                            wall.hitBalls = [hitBall];
+                            wall.hitTime = Date.now(); // For green blink effect
+                        }
+                    }
+                }
+                
+                // Reset tracking if time window expired (200ms passed) and not damaged
+                if (wall.firstHitTime && !wall.damageState && Date.now() - wall.firstHitTime > 200) {
+                    wall.firstHitTime = null;
+                    wall.firstHitBall = null;
+                    wall.hitBalls = [];
                 }
                 
                 return true; // Keep wall
@@ -1506,14 +1568,25 @@
             // Draw completed walls
             game.completedWalls.forEach(wall => {
                 const bounds = wall.bounds;
+                const now = Date.now();
+                const timeSinceHit = wall.hitTime ? now - wall.hitTime : 9999;
+                const blinkDuration = 200; // milliseconds
                 
                 // Determine color based on damage state
                 if (wall.damageState === 'damaged') {
-                    ctx.fillStyle = '#ef4444'; // Red when damaged
+                    // Red when damaged
+                    ctx.fillStyle = '#ef4444';
                     ctx.shadowColor = '#ef4444';
                     ctx.shadowBlur = 15;
+                } else if (timeSinceHit < blinkDuration) {
+                    // Green blink when recently hit (but not damaged)
+                    const progress = timeSinceHit / blinkDuration;
+                    ctx.fillStyle = '#10b981';
+                    ctx.shadowColor = '#10b981';
+                    ctx.shadowBlur = 15 * (1 - progress); // Fade shadow
                 } else {
-                    ctx.fillStyle = '#9333ea'; // Purple when healthy
+                    // Purple when healthy
+                    ctx.fillStyle = '#9333ea';
                     ctx.shadowColor = '#9333ea';
                     ctx.shadowBlur = 10;
                 }
