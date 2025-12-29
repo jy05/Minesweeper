@@ -415,6 +415,7 @@
             collisionEffects: [], // Ball collision sparkle effects
             powerupsUnlocked: [false, false, false, false, false, false, false], // 7 power-ups
             powerupsUsed: [false, false, false, false, false, false, false],
+            powerupCooldowns: [0, 0, 0, 0, 0, 0, 0], // Cooldown end times (timestamp)
             // Tracking for unlock conditions
             levelStartTime: 0,
             wallsPlacedThisLevel: 0,
@@ -906,6 +907,48 @@
             return Math.floor((filledCells / totalCells) * 100);
         }
         
+        function recalculateFilledAreas() {
+            // Recalculate which areas are ball-accessible and update permanentlyFilled
+            const ballAccessible = new Set();
+            
+            // Flood fill from each ball position
+            game.balls.forEach(ball => {
+                const pos = ball.body.position;
+                const radius = ball.body.circleRadius;
+                
+                // Check center and points around the ball
+                const checkPoints = [
+                    [pos.x, pos.y],
+                    [pos.x - radius, pos.y],
+                    [pos.x + radius, pos.y],
+                    [pos.x, pos.y - radius],
+                    [pos.x, pos.y + radius]
+                ];
+                
+                checkPoints.forEach(([x, y]) => {
+                    const col = Math.floor(x / GRID_SIZE);
+                    const row = Math.floor(y / GRID_SIZE);
+                    if (col >= 0 && col < GRID_COLS && row >= 0 && row < GRID_ROWS) {
+                        floodFill(col, row, ballAccessible);
+                    }
+                });
+            });
+            
+            // Clear permanentlyFilled cells that are now ball-accessible
+            const cellsToRemove = [];
+            game.permanentlyFilled.forEach(key => {
+                if (ballAccessible.has(key)) {
+                    cellsToRemove.push(key);
+                }
+            });
+            
+            cellsToRemove.forEach(key => {
+                game.permanentlyFilled.delete(key);
+            });
+            
+            console.log(`Recalculated: removed ${cellsToRemove.length} cells from permanentlyFilled`);
+        }
+        
         function createFallingSections() {
             console.log('=== Creating Falling Sections ===');
             // Get all cells accessible from balls (check multiple points around each ball)
@@ -1186,12 +1229,8 @@
                                 
                                 World.remove(world, wall);
                                 
-                                const bounds = wall.bounds;
-                                for (let x = Math.floor(bounds.min.x / GRID_SIZE); x < Math.ceil(bounds.max.x / GRID_SIZE); x++) {
-                                    for (let y = Math.floor(bounds.min.y / GRID_SIZE); y < Math.ceil(bounds.max.y / GRID_SIZE); y++) {
-                                        game.permanentlyFilled.delete(`${x},${y}`);
-                                    }
-                                }
+                                // Recalculate accessible areas after wall is destroyed
+                                recalculateFilledAreas();
                                 
                                 showMessage('💥💥 Wall obliterated by multiple balls!');
                                 updateUI();
@@ -1218,12 +1257,8 @@
                                 
                                 World.remove(world, wall);
                                 
-                                const bounds = wall.bounds;
-                                for (let x = Math.floor(bounds.min.x / GRID_SIZE); x < Math.ceil(bounds.max.x / GRID_SIZE); x++) {
-                                    for (let y = Math.floor(bounds.min.y / GRID_SIZE); y < Math.ceil(bounds.max.y / GRID_SIZE); y++) {
-                                        game.permanentlyFilled.delete(`${x},${y}`);
-                                    }
-                                }
+                                // Recalculate accessible areas after wall is destroyed
+                                recalculateFilledAreas();
                                 
                                 showMessage('💥 Wall destroyed!');
                                 updateUI();
@@ -1572,12 +1607,20 @@
                 const timeSinceHit = wall.hitTime ? now - wall.hitTime : 9999;
                 const blinkDuration = 200; // milliseconds
                 
-                // Determine color based on damage state
+                // Determine color based on damage state and recent hits
                 if (wall.damageState === 'damaged') {
-                    // Red when damaged
-                    ctx.fillStyle = '#ef4444';
-                    ctx.shadowColor = '#ef4444';
-                    ctx.shadowBlur = 15;
+                    if (timeSinceHit < blinkDuration) {
+                        // White flash when damaged wall is hit
+                        const progress = timeSinceHit / blinkDuration;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.shadowColor = '#ffffff';
+                        ctx.shadowBlur = 15 * (1 - progress); // Fade shadow
+                    } else {
+                        // Red when damaged
+                        ctx.fillStyle = '#ef4444';
+                        ctx.shadowColor = '#ef4444';
+                        ctx.shadowBlur = 15;
+                    }
                 } else if (timeSinceHit < blinkDuration) {
                     // Green blink when recently hit (but not damaged)
                     const progress = timeSinceHit / blinkDuration;
@@ -1848,6 +1891,7 @@
                 updateBallTrails();
                 updateCollisionEffects();
                 updateShatterEffects();
+                updatePowerupUI(); // Update cooldown timers
                 draw();
             }
             
@@ -1952,13 +1996,14 @@
             }
             
             // Check if Second Chance is available (not available in Free Play mode)
-            if (game.gameMode !== 'freeplay' && game.powerupsUnlocked[6] && !game.powerupsUsed[6]) {
+            const secondChanceCooldown = Math.max(0, game.powerupCooldowns[6] - Date.now());
+            if (game.gameMode !== 'freeplay' && game.powerupsUnlocked[6] && secondChanceCooldown === 0) {
                 // Offer Second Chance
-                const useSecondChance = confirm(`${gameOverMessage}\n\n🔄💫 You have a Second Chance available!\n\nUse it to restore your lives and restart this level?\n\n(This will consume your Second Chance power-up)`);
+                const useSecondChance = confirm(`${gameOverMessage}\n\n🔄💫 You have a Second Chance available!\n\nUse it to restore your lives and restart this level?\n\n(This will put Second Chance on cooldown)`);
                 
                 if (useSecondChance) {
                     // Use Second Chance
-                    game.powerupsUsed[6] = true;
+                    game.powerupCooldowns[6] = Date.now() + 60000; // 60s cooldown
                     game.lives = 5 + game.level * 2; // Full refill
                     
                     // In Time Attack mode, also add bonus time
@@ -2114,6 +2159,7 @@
         });
         
         function updatePowerupUI() {
+            const now = Date.now();
             powerupItems.forEach((item, index) => {
                 item.classList.remove('selected');
                 if (index === game.selectedPowerup) {
@@ -2125,12 +2171,19 @@
                 if (!game.powerupsUnlocked[index]) {
                     statusEl.textContent = 'Locked';
                     statusEl.style.color = '#666';
-                } else if (game.powerupsUsed[index]) {
-                    statusEl.textContent = 'Used';
-                    statusEl.style.color = '#888';
                 } else {
-                    statusEl.textContent = 'Ready';
-                    statusEl.style.color = '#10b981';
+                    // Check if on cooldown
+                    const cooldownRemaining = Math.max(0, game.powerupCooldowns[index] - now);
+                    if (cooldownRemaining > 0) {
+                        const seconds = Math.ceil(cooldownRemaining / 1000);
+                        statusEl.textContent = seconds + 's';
+                        statusEl.style.color = '#ef4444'; // Red countdown
+                        statusEl.style.fontFamily = 'Orbitron, monospace';
+                    } else {
+                        statusEl.textContent = 'Ready';
+                        statusEl.style.color = '#10b981';
+                        statusEl.style.fontFamily = 'Orbitron, monospace';
+                    }
                 }
             });
         }
@@ -2146,8 +2199,12 @@
                 return;
             }
             
-            if (game.powerupsUsed[index]) {
-                showMessage('Power-up already used!');
+            // Check if on cooldown
+            const now = Date.now();
+            const cooldownRemaining = Math.max(0, game.powerupCooldowns[index] - now);
+            if (cooldownRemaining > 0) {
+                const seconds = Math.ceil(cooldownRemaining / 1000);
+                showMessage(`Power-up on cooldown! ${seconds}s remaining`);
                 return;
             }
             
@@ -2157,7 +2214,7 @@
             switch(index) {
                 case 0: // Freeze Time - Pause balls for 5 seconds
                     game.freezeTimeActive = true;
-                    game.powerupsUsed[index] = true;
+                    game.powerupCooldowns[index] = Date.now() + 30000; // 30s cooldown
                     updateUI();
                     updatePowerupUI();
                     showMessage('❄️ Freeze Time! Balls frozen for 5 seconds!');
@@ -2169,7 +2226,7 @@
                     
                 case 1: // Electron Beam - Next wall is instant (no growth, just click-to-click)
                     game.electronBeamActive = true;
-                    game.powerupsUsed[index] = true;
+                    game.powerupCooldowns[index] = Date.now() + 20000; // 20s cooldown
                     updateUI();
                     updatePowerupUI();
                     showMessage('⚡ Electron Beam! Click start and end points for instant wall!');
@@ -2179,7 +2236,7 @@
                     if (game.balls.length > 0) {
                         const removedBall = game.balls.pop();
                         World.remove(world, removedBall.body);
-                        game.powerupsUsed[index] = true;
+                        game.powerupCooldowns[index] = Date.now() + 25000; // 25s cooldown
                         updateUI();
                         updatePowerupUI();
                         showMessage('💥 Ball Destroyed! -1 Ball');
@@ -2194,7 +2251,7 @@
                         ball.vx = Math.cos(angle) * ball.speed;
                         ball.vy = Math.sin(angle) * ball.speed;
                     });
-                    game.powerupsUsed[index] = true;
+                    game.powerupCooldowns[index] = Date.now() + 15000; // 15s cooldown
                     updateUI();
                     updatePowerupUI();
                     showMessage('🔄 Bounce Update! All ball directions randomized!');
@@ -2203,7 +2260,7 @@
                 case 4: // Slow Motion - Half speed for 10 seconds
                     game.slowMotionActive = true;
                     game.slowMotionEndTime = Date.now() + 10000;
-                    game.powerupsUsed[index] = true;
+                    game.powerupCooldowns[index] = Date.now() + 35000; // 35s cooldown
                     updateUI();
                     updatePowerupUI();
                     showMessage('⏱️ Slow Motion! Balls slowed for 10 seconds!');
@@ -2215,14 +2272,14 @@
                     
                 case 5: // Extra Wall
                     game.wallsLeft++;
-                    game.powerupsUsed[index] = true;
+                    game.powerupCooldowns[index] = Date.now() + 20000; // 20s cooldown
                     updateUI();
                     updatePowerupUI();
                     showMessage('➕ Extra Wall! +1 Wall');
                     break;
                     
                 case 6: // Second Chance (reset level with full lives)
-                    game.powerupsUsed[index] = true;
+                    game.powerupCooldowns[index] = Date.now() + 60000; // 60s cooldown
                     game.lives = 5 + game.level * 2; // Full refill
                     updateUI();
                     updatePowerupUI();
@@ -2240,8 +2297,9 @@
             game.isRunning = true;
             game.isPaused = false;
             game.levelsCompleted = 0;
-            // Reset power-up usage (but keep unlocks)
+            // Reset power-up usage and cooldowns (but keep unlocks)
             game.powerupsUsed = [false, false, false, false, false, false, false];
+            game.powerupCooldowns = [0, 0, 0, 0, 0, 0, 0];
             updatePowerupUI();
             initLevel();
             gameLoop();
