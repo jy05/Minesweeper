@@ -908,10 +908,11 @@
         }
         
         function recalculateFilledAreas() {
-            // Recalculate which areas are ball-accessible and update permanentlyFilled
-            const ballAccessible = new Set();
+            // Completely rebuild permanentlyFilled based on current walls and ball positions
+            console.log('=== Recalculating Filled Areas ===');
             
-            // Flood fill from each ball position
+            // Get all cells accessible from balls
+            const ballAccessible = new Set();
             game.balls.forEach(ball => {
                 const pos = ball.body.position;
                 const radius = ball.body.circleRadius;
@@ -934,19 +935,58 @@
                 });
             });
             
-            // Clear permanentlyFilled cells that are now ball-accessible
-            const cellsToRemove = [];
-            game.permanentlyFilled.forEach(key => {
-                if (ballAccessible.has(key)) {
-                    cellsToRemove.push(key);
+            // Find all trapped regions (non-accessible and not walls)
+            const newPermanentlyFilled = new Set();
+            const processed = new Set();
+            
+            for (let row = 0; row < GRID_ROWS; row++) {
+                for (let col = 0; col < GRID_COLS; col++) {
+                    const key = `${col},${row}`;
+                    
+                    // Skip if already processed or accessible
+                    if (processed.has(key) || ballAccessible.has(key)) continue;
+                    
+                    const cellMinX = col * GRID_SIZE;
+                    const cellMaxX = (col + 1) * GRID_SIZE;
+                    const cellMinY = row * GRID_SIZE;
+                    const cellMaxY = (row + 1) * GRID_SIZE;
+                    
+                    // Check if this cell intersects with a wall
+                    let blockedByWall = false;
+                    for (let wall of game.completedWalls) {
+                        const bounds = wall.bounds;
+                        if (!(cellMaxX < bounds.min.x || cellMinX > bounds.max.x ||
+                              cellMaxY < bounds.min.y || cellMinY > bounds.max.y)) {
+                            blockedByWall = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!blockedByWall) {
+                        // This is a trapped cell - add it to permanentlyFilled
+                        newPermanentlyFilled.add(key);
+                    }
+                    
+                    processed.add(key);
                 }
+            }
+            
+            // Replace permanentlyFilled with the new set
+            const oldSize = game.permanentlyFilled.size;
+            game.permanentlyFilled = newPermanentlyFilled;
+            const newSize = game.permanentlyFilled.size;
+            
+            // Remove falling sections whose cells are now accessible
+            game.fallingSections = game.fallingSections.filter(section => {
+                // Check if any cell in this section is now accessible
+                const hasAccessibleCell = section.cells.some(([c, r]) => {
+                    return ballAccessible.has(`${c},${r}`);
+                });
+                // Keep only sections that don't have accessible cells
+                return !hasAccessibleCell;
             });
             
-            cellsToRemove.forEach(key => {
-                game.permanentlyFilled.delete(key);
-            });
-            
-            console.log(`Recalculated: removed ${cellsToRemove.length} cells from permanentlyFilled`);
+            console.log(`Recalculated: ${oldSize} -> ${newSize} filled cells (${newSize - oldSize > 0 ? '+' : ''}${newSize - oldSize})`);
         }
         
         function createFallingSections() {
