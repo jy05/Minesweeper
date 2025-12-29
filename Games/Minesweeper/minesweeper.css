@@ -459,6 +459,8 @@ body::after {
                 inset 0 0 20px rgba(0, 0, 0, 0.3);
     padding: 25px;
     max-width: 100%;
+    position: relative;
+    z-index: 2;
 }
 
 header h1 {
@@ -504,36 +506,45 @@ header h1 {
 }
 
 .counter .value {
-    font-family: 'Courier New', monospace;
+    font-family: 'Press Start 2P', cursive;
     font-weight: bold;
-    color: #ff0000;
-    background: #000;
-    padding: 5px 10px;
-    border-radius: 5px;
+    color: #ec4899;
+    background: #0a0515;
+    padding: 8px 12px;
+    border: 2px solid #4a148c;
+    border-radius: 0;
     min-width: 60px;
     text-align: center;
+    font-size: 10px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .face-button {
-    font-size: 1em;
+    font-size: 1.2em;
     font-weight: bold;
-    background: linear-gradient(145deg, #667eea, #764ba2);
+    background: linear-gradient(180deg, #9333ea 0%, #6b21a8 100%);
     color: white;
-    border: none;
-    border-radius: 8px;
+    border: 3px solid #4a148c;
+    border-bottom: 4px solid #1a0f2e;
+    border-right: 4px solid #1a0f2e;
+    border-radius: 0;
     padding: 10px 20px;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.1s;
+    box-shadow: 0 4px 0 #1a0f2e,
+                0 0 15px rgba(147, 51, 234, 0.4);
     white-space: nowrap;
 }
 
 .face-button:hover {
-    transform: scale(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #1a0f2e,
+                0 0 20px rgba(147, 51, 234, 0.6);
 }
 
 .face-button:active {
-    transform: scale(0.95);
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #1a0f2e;
 }
 
 .power-ups {
@@ -543,25 +554,32 @@ header h1 {
 }
 
 .hint-button {
-    background: linear-gradient(145deg, #ffd700, #ffed4e);
-    border: none;
-    border-radius: 10px;
+    background: linear-gradient(180deg, #ec4899 0%, #be185d 100%);
+    border: 3px solid #4a148c;
+    border-bottom: 4px solid #1a0f2e;
+    border-right: 4px solid #1a0f2e;
+    border-radius: 0;
     padding: 12px 24px;
     font-size: 1.1em;
     cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+    transition: all 0.1s;
+    box-shadow: 0 4px 0 #1a0f2e,
+                0 0 15px rgba(236, 72, 153, 0.4);
     font-weight: bold;
-    color: #333;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: white;
 }
 
 .hint-button:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 215, 0, 0.6);
+    box-shadow: 0 6px 0 #1a0f2e,
+                0 0 20px rgba(236, 72, 153, 0.6);
 }
 
 .hint-button:active:not(:disabled) {
-    transform: translateY(0);
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #1a0f2e;
 }
 
 .hint-button:disabled {
@@ -603,10 +621,12 @@ header h1 {
 .game-board {
     display: inline-grid;
     gap: 2px;
-    background: #999;
-    padding: 4px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background: #1a0f2e;
+    padding: 6px;
+    border: 4px solid #4a148c;
+    border-radius: 0;
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.3),
+                inset 0 2px 10px rgba(0, 0, 0, 0.8);
     margin: 0 auto;
 }
 
@@ -618,13 +638,18 @@ header h1 {
 .cell {
     width: 30px;
     height: 30px;
-    background: linear-gradient(145deg, #c0c0c0, #a0a0a0);
-    border: 3px outset #d0d0d0;
+    background: linear-gradient(145deg, #4a148c, #2d0a57);
+    border: 3px solid #6b21a8;
+    border-top: 3px solid #7c3aed;
+    border-left: 3px solid #7c3aed;
+    border-bottom: 3px solid #1a0f2e;
+    border-right: 3px solid #1a0f2e;
     display: flex;
     justify-content: center;
     align-items: center;
     font-weight: bold;
     font-size: 1em;
+    font-family: 'Press Start 2P', cursive;
     cursor: pointer;
     user-select: none;
     transition: all 0.1s;
@@ -632,18 +657,27 @@ header h1 {
 }
 
 .cell:hover:not(.revealed):not(.flagged) {
-    filter: brightness(1.1);
-    transform: scale(1.05);
+    background: linear-gradient(145deg, #6b21a8, #4a148c);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.4);
 }
 
 .cell:active:not(.revealed) {
-    transform: scale(0.95);
+    transform: translateY(0);
+    border-top: 3px solid #1a0f2e;
+    border-left: 3px solid #1a0f2e;
+    border-bottom: 3px solid #7c3aed;
+    border-right: 3px solid #7c3aed;
 }
 
 .cell.revealed {
-    background: #e0e0e0;
-    border: 1px solid #999;
+    background: #0a0515;
+    border: 2px solid #4a148c;
     cursor: default;
+    border-top: 2px solid #2d0a57;
+    border-left: 2px solid #2d0a57;
+    border-bottom: 2px solid #4a148c;
+    border-right: 2px solid #4a148c;
 }
 
 .cell.flagged::after {
@@ -652,7 +686,8 @@ header h1 {
 }
 
 .cell.mine {
-    background: #ff4444;
+    background: linear-gradient(145deg, #be185d, #831843);
+    border-color: #ec4899;
 }
 
 .cell.mine::after {
@@ -665,19 +700,19 @@ header h1 {
 }
 
 @keyframes hintGlow {
-    0%, 100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
-    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 1); }
+    0%, 100% { box-shadow: 0 0 0 rgba(236, 72, 153, 0); }
+    50% { box-shadow: 0 0 20px rgba(236, 72, 153, 1), 0 0 30px rgba(147, 51, 234, 0.8); }
 }
 
-/* Number colors */
-.cell[data-count="1"] { color: #0000ff; }
-.cell[data-count="2"] { color: #008000; }
-.cell[data-count="3"] { color: #ff0000; }
-.cell[data-count="4"] { color: #000080; }
-.cell[data-count="5"] { color: #800000; }
-.cell[data-count="6"] { color: #008080; }
-.cell[data-count="7"] { color: #000000; }
-.cell[data-count="8"] { color: #808080; }
+/* Number colors - Retro neon style */
+.cell[data-count="1"] { color: #60a5fa; text-shadow: 0 0 5px #60a5fa; }
+.cell[data-count="2"] { color: #34d399; text-shadow: 0 0 5px #34d399; }
+.cell[data-count="3"] { color: #f87171; text-shadow: 0 0 5px #f87171; }
+.cell[data-count="4"] { color: #a78bfa; text-shadow: 0 0 5px #a78bfa; }
+.cell[data-count="5"] { color: #fb923c; text-shadow: 0 0 5px #fb923c; }
+.cell[data-count="6"] { color: #22d3ee; text-shadow: 0 0 5px #22d3ee; }
+.cell[data-count="7"] { color: #fbbf24; text-shadow: 0 0 5px #fbbf24; }
+.cell[data-count="8"] { color: #ec4899; text-shadow: 0 0 5px #ec4899; }
 
 .settings {
     margin-top: 20px;
