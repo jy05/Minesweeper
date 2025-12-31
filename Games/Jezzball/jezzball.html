@@ -445,6 +445,18 @@
         const GRID_COLS = canvas.width / GRID_SIZE;
         const GRID_ROWS = canvas.height / GRID_SIZE;
         
+        // Load bounce sound
+        const bounceSound = new Audio('../../assets/sounds/ballbounce.wav');
+        bounceSound.volume = 0.3; // Set to 30% volume
+        
+        // Helper function to play bounce sound
+        function playBounceSound() {
+            // Clone the audio to allow multiple overlapping plays
+            const sound = bounceSound.cloneNode();
+            sound.volume = 0.3;
+            sound.play().catch(e => console.log('Audio play failed:', e));
+        }
+        
         // No boundary walls - we'll handle boundaries manually for better control
         
         // Start game with selected mode
@@ -908,8 +920,9 @@
         }
         
         function recalculateFilledAreas() {
-            // Completely rebuild permanentlyFilled based on current walls and ball positions
+            // Remove cells from permanentlyFilled that are now ball-accessible
             console.log('=== Recalculating Filled Areas ===');
+            console.log('Before - permanentlyFilled size:', game.permanentlyFilled.size);
             
             // Get all cells accessible from balls
             const ballAccessible = new Set();
@@ -935,48 +948,22 @@
                 });
             });
             
-            // Find all trapped regions (non-accessible and not walls)
-            const newPermanentlyFilled = new Set();
-            const processed = new Set();
+            console.log('Ball-accessible cells:', ballAccessible.size);
             
-            for (let row = 0; row < GRID_ROWS; row++) {
-                for (let col = 0; col < GRID_COLS; col++) {
-                    const key = `${col},${row}`;
-                    
-                    // Skip if already processed or accessible
-                    if (processed.has(key) || ballAccessible.has(key)) continue;
-                    
-                    const cellMinX = col * GRID_SIZE;
-                    const cellMaxX = (col + 1) * GRID_SIZE;
-                    const cellMinY = row * GRID_SIZE;
-                    const cellMaxY = (row + 1) * GRID_SIZE;
-                    
-                    // Check if this cell intersects with a wall
-                    let blockedByWall = false;
-                    for (let wall of game.completedWalls) {
-                        const bounds = wall.bounds;
-                        if (!(cellMaxX < bounds.min.x || cellMinX > bounds.max.x ||
-                              cellMaxY < bounds.min.y || cellMinY > bounds.max.y)) {
-                            blockedByWall = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!blockedByWall) {
-                        // This is a trapped cell - add it to permanentlyFilled
-                        newPermanentlyFilled.add(key);
-                    }
-                    
-                    processed.add(key);
+            // Remove cells from permanentlyFilled that are now accessible
+            const removedCells = [];
+            game.permanentlyFilled.forEach(key => {
+                if (ballAccessible.has(key)) {
+                    removedCells.push(key);
                 }
-            }
+            });
             
-            // Replace permanentlyFilled with the new set
-            const oldSize = game.permanentlyFilled.size;
-            game.permanentlyFilled = newPermanentlyFilled;
-            const newSize = game.permanentlyFilled.size;
+            removedCells.forEach(key => {
+                game.permanentlyFilled.delete(key);
+            });
             
             // Remove falling sections whose cells are now accessible
+            const oldFallingSections = game.fallingSections.length;
             game.fallingSections = game.fallingSections.filter(section => {
                 // Check if any cell in this section is now accessible
                 const hasAccessibleCell = section.cells.some(([c, r]) => {
@@ -986,7 +973,10 @@
                 return !hasAccessibleCell;
             });
             
-            console.log(`Recalculated: ${oldSize} -> ${newSize} filled cells (${newSize - oldSize > 0 ? '+' : ''}${newSize - oldSize})`);
+            console.log('After - permanentlyFilled size:', game.permanentlyFilled.size);
+            console.log(`Removed ${removedCells.length} cells from permanentlyFilled`);
+            console.log(`Removed ${oldFallingSections - game.fallingSections.length} falling sections`);
+            console.log('Sample removed cells:', removedCells.slice(0, 5));
         }
         
         function createFallingSections() {
@@ -1218,6 +1208,8 @@
         function updateCompletedWalls() {
             // Check for double-hits on completed walls - first double-hit turns red, second double-hit breaks
             // If 3+ different balls hit within 200ms: instant break
+            let wallWasDestroyed = false;
+            
             game.completedWalls = game.completedWalls.filter(wall => {
                 // Check if any ball is colliding with this wall
                 let hitBall = null;
@@ -1269,11 +1261,9 @@
                                 
                                 World.remove(world, wall);
                                 
-                                // Recalculate accessible areas after wall is destroyed
-                                recalculateFilledAreas();
-                                
                                 showMessage('💥💥 Wall obliterated by multiple balls!');
                                 updateUI();
+                                wallWasDestroyed = true;
                                 return false; // Remove from array
                             }
                             
@@ -1297,11 +1287,9 @@
                                 
                                 World.remove(world, wall);
                                 
-                                // Recalculate accessible areas after wall is destroyed
-                                recalculateFilledAreas();
-                                
                                 showMessage('💥 Wall destroyed!');
                                 updateUI();
+                                wallWasDestroyed = true;
                                 return false; // Remove from array
                             }
                         } else {
@@ -1323,6 +1311,11 @@
                 
                 return true; // Keep wall
             });
+            
+            // Recalculate filled areas AFTER filtering is complete
+            if (wallWasDestroyed) {
+                recalculateFilledAreas();
+            }
         }
         
         function updateBallPhysics() {
@@ -1344,17 +1337,21 @@
                 if (x - radius < 0) {
                     x = radius;
                     ball.vx = Math.abs(ball.vx);
+                    playBounceSound();
                 } else if (x + radius > canvas.width) {
                     x = canvas.width - radius;
                     ball.vx = -Math.abs(ball.vx);
+                    playBounceSound();
                 }
                 
                 if (y - radius < 0) {
                     y = radius;
                     ball.vy = Math.abs(ball.vy);
+                    playBounceSound();
                 } else if (y + radius > canvas.height) {
                     y = canvas.height - radius;
                     ball.vy = -Math.abs(ball.vy);
+                    playBounceSound();
                 }
                 
                 // Ball-to-ball collisions (with limited separation to prevent escaping)
@@ -1374,6 +1371,7 @@
                             const collisionX = (x + otherPos.x) / 2;
                             const collisionY = (y + otherPos.y) / 2;
                             createCollisionEffect(collisionX, collisionY, ball.color, otherBall.color);
+                            playBounceSound();
                             ball.collisionCooldown = true;
                             otherBall.collisionCooldown = true;
                             setTimeout(() => {
@@ -1428,6 +1426,7 @@
                                 y = bounds.max.y + radius;
                             }
                             ball.vy = -ball.vy;
+                            playBounceSound();
                         } else {
                             // Vertical wall
                             if (ball.vx > 0) {
@@ -1436,6 +1435,7 @@
                                 x = bounds.max.x + radius;
                             }
                             ball.vx = -ball.vx;
+                            playBounceSound();
                         }
                     }
                 }
@@ -1446,6 +1446,10 @@
                     ball.vx = (ball.vx / currentSpeed) * ball.speed;
                     ball.vy = (ball.vy / currentSpeed) * ball.speed;
                 }
+                
+                // Final boundary enforcement to prevent any escaping
+                x = Math.max(radius, Math.min(canvas.width - radius, x));
+                y = Math.max(radius, Math.min(canvas.height - radius, y));
                 
                 // Update position
                 Body.setPosition(ball.body, { x, y });
@@ -2107,6 +2111,8 @@
             const col = Math.floor(x / GRID_SIZE);
             const row = Math.floor(y / GRID_SIZE);
             const key = `${col},${row}`;
+            
+            console.log(`Click at (${col}, ${row}), permanentlyFilled.has: ${game.permanentlyFilled.has(key)}, permanentlyFilled.size: ${game.permanentlyFilled.size}`);
             
             if (game.permanentlyFilled.has(key)) {
                 showMessage('Cannot place wall in fallen area!');
