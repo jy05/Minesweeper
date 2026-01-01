@@ -447,13 +447,13 @@
         
         // Load bounce sound
         const bounceSound = new Audio('../../assets/sounds/ballbounce.wav');
-        bounceSound.volume = 0.3; // Set to 30% volume
+        bounceSound.volume = 0.15; // Set to 15% volume
         
         // Helper function to play bounce sound
         function playBounceSound() {
             // Clone the audio to allow multiple overlapping plays
             const sound = bounceSound.cloneNode();
-            sound.volume = 0.3;
+            sound.volume = 0.15;
             sound.play().catch(e => console.log('Audio play failed:', e));
         }
         
