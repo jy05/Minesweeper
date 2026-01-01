@@ -669,11 +669,13 @@ function updateFace(state) {
         faceButton.textContent = 'You Won! 🎉';
         faceButton.style.background = 'linear-gradient(145deg, #4CAF50, #45a049)';
     } else if (state === '😵' || state === 'lose') {
-        faceButton.textContent = 'Game Over 💣';
+        faceButton.textContent = 'Game Over\nNew Game';
         faceButton.style.background = 'linear-gradient(145deg, #f44336, #da190b)';
+        faceButton.style.whiteSpace = 'pre-line';
     } else {
         faceButton.textContent = 'New Game';
         faceButton.style.background = 'linear-gradient(145deg, #667eea, #764ba2)';
+        faceButton.style.whiteSpace = 'normal';
     }
 }
 
