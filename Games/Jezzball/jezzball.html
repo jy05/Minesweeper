@@ -2318,8 +2318,57 @@
                 return;
             }
             
+            // Check if a wall already exists at this position
+            const checkWallOverlap = (newWallX, newWallY, newWallWidth, newWallHeight, direction) => {
+                const margin = 3; // Allow a small margin for walls to be considered overlapping
+                
+                for (let wall of game.completedWalls) {
+                    const wallX = wall.bounds.min.x;
+                    const wallY = wall.bounds.min.y;
+                    const wallWidth = wall.bounds.max.x - wall.bounds.min.x;
+                    const wallHeight = wall.bounds.max.y - wall.bounds.min.y;
+                    
+                    // Determine wall direction based on dimensions
+                    const existingIsHorizontal = wallWidth > wallHeight;
+                    const newIsHorizontal = direction === 'horizontal';
+                    
+                    // Check if both walls are the same direction
+                    if (existingIsHorizontal === newIsHorizontal) {
+                        // Check for overlap
+                        if (newIsHorizontal) {
+                            // For horizontal walls, check if they're at similar Y position and X ranges overlap
+                            if (Math.abs(newWallY - wallY) < margin) {
+                                // Y positions are very close, check X overlap
+                                if (!(newWallX > wallX + wallWidth + margin || newWallX + newWallWidth < wallX - margin)) {
+                                    return true; // Overlapping horizontal walls
+                                }
+                            }
+                        } else {
+                            // For vertical walls, check if they're at similar X position and Y ranges overlap
+                            if (Math.abs(newWallX - wallX) < margin) {
+                                // X positions are very close, check Y overlap
+                                if (!(newWallY > wallY + wallHeight + margin || newWallY + newWallHeight < wallY - margin)) {
+                                    return true; // Overlapping vertical walls
+                                }
+                            }
+                        }
+                    }
+                }
+                return false;
+            };
+            
             // Electron Beam mode - indestructible wall that builds normally but can't be stopped
             if (game.electronBeamActive) {
+                const newWallX = wallDirection === 'horizontal' ? x : x - WALL_THICKNESS / 2;
+                const newWallY = wallDirection === 'horizontal' ? y - WALL_THICKNESS / 2 : y;
+                const newWallWidth = wallDirection === 'horizontal' ? canvas.width : WALL_THICKNESS;
+                const newWallHeight = wallDirection === 'horizontal' ? WALL_THICKNESS : canvas.height;
+                
+                if (checkWallOverlap(newWallX, newWallY, newWallWidth, newWallHeight, wallDirection)) {
+                    showMessage('Cannot place wall on top of existing wall!');
+                    return;
+                }
+                
                 updateUI();
                 
                 if (wallDirection === 'horizontal') {
@@ -2345,6 +2394,17 @@
                 // Deactivate after use
                 game.electronBeamActive = false;
                 showMessage('⚡ Electron Beam wall building - indestructible!');
+                return;
+            }
+            
+            // Check for regular wall placement overlap
+            const newWallX = wallDirection === 'horizontal' ? x : x - WALL_THICKNESS / 2;
+            const newWallY = wallDirection === 'horizontal' ? y - WALL_THICKNESS / 2 : y;
+            const newWallWidth = wallDirection === 'horizontal' ? canvas.width : WALL_THICKNESS;
+            const newWallHeight = wallDirection === 'horizontal' ? WALL_THICKNESS : canvas.height;
+            
+            if (checkWallOverlap(newWallX, newWallY, newWallWidth, newWallHeight, wallDirection)) {
+                showMessage('Cannot place wall on top of existing wall!');
                 return;
             }
             
