@@ -1709,18 +1709,18 @@
                 const key = `${col},${row}`;
                 if (visited.has(key)) continue;
                 
-                // Check if this grid cell intersects with any wall
-                const cellMinX = col * GRID_SIZE;
-                const cellMaxX = (col + 1) * GRID_SIZE;
-                const cellMinY = row * GRID_SIZE;
-                const cellMaxY = (row + 1) * GRID_SIZE;
+                // Check if this grid cell is blocked by a wall
+                const cellCenterX = (col + 0.5) * GRID_SIZE;
+                const cellCenterY = (row + 0.5) * GRID_SIZE;
                 
                 let blockedByWall = false;
                 for (let wall of game.completedWalls) {
                     const bounds = wall.bounds;
-                    // Check if cell area intersects with wall bounds
-                    if (!(cellMaxX < bounds.min.x || cellMinX > bounds.max.x ||
-                          cellMaxY < bounds.min.y || cellMinY > bounds.max.y)) {
+                    // Check if wall significantly overlaps with the cell center
+                    // Add a margin to account for wall thickness
+                    const margin = WALL_THICKNESS / 2 + 1;
+                    if (cellCenterX >= bounds.min.x - margin && cellCenterX <= bounds.max.x + margin &&
+                        cellCenterY >= bounds.min.y - margin && cellCenterY <= bounds.max.y + margin) {
                         blockedByWall = true;
                         break;
                     }
@@ -1730,7 +1730,72 @@
                 
                 visited.add(key);
                 
-                stack.push([col + 1, row], [col - 1, row], [col, row + 1], [col, row - 1]);
+                // Check for walls blocking movement to adjacent cells before adding them
+                // Right
+                if (col + 1 < GRID_COLS && !visited.has(`${col + 1},${row}`)) {
+                    const edgeX = (col + 1) * GRID_SIZE;
+                    const edgeY = (row + 0.5) * GRID_SIZE;
+                    let blocked = false;
+                    for (let wall of game.completedWalls) {
+                        const bounds = wall.bounds;
+                        // Check if vertical wall blocks this edge
+                        if (edgeX >= bounds.min.x && edgeX <= bounds.max.x &&
+                            edgeY >= bounds.min.y && edgeY <= bounds.max.y) {
+                            blocked = true;
+                            break;
+                        }
+                    }
+                    if (!blocked) stack.push([col + 1, row]);
+                }
+                
+                // Left
+                if (col - 1 >= 0 && !visited.has(`${col - 1},${row}`)) {
+                    const edgeX = col * GRID_SIZE;
+                    const edgeY = (row + 0.5) * GRID_SIZE;
+                    let blocked = false;
+                    for (let wall of game.completedWalls) {
+                        const bounds = wall.bounds;
+                        if (edgeX >= bounds.min.x && edgeX <= bounds.max.x &&
+                            edgeY >= bounds.min.y && edgeY <= bounds.max.y) {
+                            blocked = true;
+                            break;
+                        }
+                    }
+                    if (!blocked) stack.push([col - 1, row]);
+                }
+                
+                // Down
+                if (row + 1 < GRID_ROWS && !visited.has(`${col},${row + 1}`)) {
+                    const edgeX = (col + 0.5) * GRID_SIZE;
+                    const edgeY = (row + 1) * GRID_SIZE;
+                    let blocked = false;
+                    for (let wall of game.completedWalls) {
+                        const bounds = wall.bounds;
+                        // Check if horizontal wall blocks this edge
+                        if (edgeX >= bounds.min.x && edgeX <= bounds.max.x &&
+                            edgeY >= bounds.min.y && edgeY <= bounds.max.y) {
+                            blocked = true;
+                            break;
+                        }
+                    }
+                    if (!blocked) stack.push([col, row + 1]);
+                }
+                
+                // Up
+                if (row - 1 >= 0 && !visited.has(`${col},${row - 1}`)) {
+                    const edgeX = (col + 0.5) * GRID_SIZE;
+                    const edgeY = row * GRID_SIZE;
+                    let blocked = false;
+                    for (let wall of game.completedWalls) {
+                        const bounds = wall.bounds;
+                        if (edgeX >= bounds.min.x && edgeX <= bounds.max.x &&
+                            edgeY >= bounds.min.y && edgeY <= bounds.max.y) {
+                            blocked = true;
+                            break;
+                        }
+                    }
+                    if (!blocked) stack.push([col, row - 1]);
+                }
             }
         }
         
