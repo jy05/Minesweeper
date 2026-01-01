@@ -30,7 +30,7 @@ let currentDifficulty = 'easy';
 
 // DOM elements
 let gameBoard, faceButton, mineCounter, timeCounter, timerLabel;
-let hintButton, hintCount, soundToggle, particleContainer;
+let hintButton, hintCount, particleContainer;
 let welcomeScreen, highscoresScreen, gameScreen;
 let playerNameInput, playerInitialsInput;
 let modeIndicator, currentPlayerNameDisplay;
@@ -41,6 +41,7 @@ class SoundSystem {
     constructor() {
         this.audioContext = null;
         this.initialized = false;
+        this.sfxVolume = 0.3; // Default SFX volume
     }
 
     init() {
@@ -48,6 +49,10 @@ class SoundSystem {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.initialized = true;
         }
+    }
+
+    setSfxVolume(volume) {
+        this.sfxVolume = volume;
     }
 
     playTone(frequency, duration, type = 'sine') {
@@ -62,7 +67,7 @@ class SoundSystem {
         oscillator.frequency.value = frequency;
         oscillator.type = type;
         
-        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(this.sfxVolume, this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
         
         oscillator.start(this.audioContext.currentTime);
@@ -669,7 +674,7 @@ function updateFace(state) {
         faceButton.textContent = 'You Won! 🎉';
         faceButton.style.background = 'linear-gradient(145deg, #4CAF50, #45a049)';
     } else if (state === '😵' || state === 'lose') {
-        faceButton.textContent = 'Game Over\nNew Game';
+        faceButton.textContent = 'Game Over\n━━━━━━━━\nNew Game';
         faceButton.style.background = 'linear-gradient(145deg, #f44336, #da190b)';
         faceButton.style.whiteSpace = 'pre-line';
     } else {
@@ -711,7 +716,6 @@ function initializeGame() {
     timerLabel = document.getElementById('timerLabel');
     hintButton = document.getElementById('hintButton');
     hintCount = document.getElementById('hintCount');
-    soundToggle = document.getElementById('soundToggle');
     particleContainer = document.getElementById('particleContainer');
     welcomeScreen = document.getElementById('welcomeScreen');
     highscoresScreen = document.getElementById('highscoresScreen');
@@ -763,11 +767,6 @@ function initializeGame() {
         showScreen('welcome');
     });
     
-    document.getElementById('backToMenuGameBtn').addEventListener('click', () => {
-        stopTimer();
-        showScreen('welcome');
-    });
-    
     document.getElementById('backToGamesBtn').addEventListener('click', () => {
         window.location.href = '../games.html';
     });
@@ -804,20 +803,17 @@ function initializeGame() {
         }
     });
     
-    soundToggle.addEventListener('change', (e) => {
-        soundEnabled = e.target.checked;
-    });
-    
     gameBoard.addEventListener('contextmenu', (e) => e.preventDefault());
     
-    // Background Music Controls
+    // Background Music and SFX Controls
     const gameBgMusic = document.getElementById('gameBgMusic');
-    const volumeSlider = document.getElementById('volumeSlider');
-    const volumeIcon = document.getElementById('volumeIcon');
-    const volumePercent = document.getElementById('volumePercent');
-    const muteToggle = document.getElementById('muteToggle');
+    const musicVolume = document.getElementById('musicVolume');
+    const musicMuteBtn = document.getElementById('musicMuteBtn');
+    const sfxVolume = document.getElementById('sfxVolume');
+    const sfxMuteBtn = document.getElementById('sfxMuteBtn');
     
     gameBgMusic.volume = 0.15;
+    soundSystem.setSfxVolume(0.3);
     let isMusicMuted = false;
     
     // Try to start music on page load
@@ -829,29 +825,42 @@ function initializeGame() {
         document.addEventListener('click', startMusic, { once: true });
     });
     
-    volumeSlider.addEventListener('input', (e) => {
+    // Music volume control
+    musicVolume.addEventListener('input', (e) => {
         const volume = e.target.value / 100;
         gameBgMusic.volume = volume;
-        volumePercent.textContent = e.target.value + '%';
-        
-        if (volume === 0) {
-            volumeIcon.textContent = '🔇';
-        } else if (volume < 0.5) {
-            volumeIcon.textContent = '🔉';
-        } else {
-            volumeIcon.textContent = '🔊';
-        }
     });
     
-    muteToggle.addEventListener('click', () => {
+    // Music mute toggle
+    musicMuteBtn.addEventListener('click', () => {
         if (isMusicMuted) {
             gameBgMusic.play();
-            muteToggle.textContent = '🔇 Mute';
+            musicMuteBtn.textContent = '🔊';
+            musicMuteBtn.classList.remove('muted');
             isMusicMuted = false;
         } else {
             gameBgMusic.pause();
-            muteToggle.textContent = '🔊 Unmute';
+            musicMuteBtn.textContent = '🔇';
+            musicMuteBtn.classList.add('muted');
             isMusicMuted = true;
+        }
+    });
+    
+    // SFX volume control
+    sfxVolume.addEventListener('input', (e) => {
+        const volume = e.target.value / 100;
+        soundSystem.setSfxVolume(volume);
+    });
+    
+    // SFX mute toggle
+    sfxMuteBtn.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        if (soundEnabled) {
+            sfxMuteBtn.textContent = '🔊';
+            sfxMuteBtn.classList.remove('muted');
+        } else {
+            sfxMuteBtn.textContent = '🔇';
+            sfxMuteBtn.classList.add('muted');
         }
     });
     

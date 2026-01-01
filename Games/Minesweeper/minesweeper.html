@@ -10,6 +10,9 @@
     <link rel="stylesheet" href="minesweeper.css">
 </head>
 <body>
+    <!-- Back Button -->
+    <button class="back-button-top" onclick="window.location.href='../games.html'">← Back</button>
+
     <!-- Background Music -->
     <audio id="gameBgMusic" loop>
         <source src="../../assets/music/Vibe Check - 8it8oy.mp3" type="audio/mpeg">
@@ -17,12 +20,16 @@
 
     <!-- Music Controls -->
     <div class="music-controls">
-        <div class="volume-control-game">
-            <span class="volume-icon" id="volumeIcon">🔊</span>
-            <input type="range" id="volumeSlider" class="volume-slider-game" min="0" max="100" value="15">
-            <span class="volume-percent" id="volumePercent">15%</span>
+        <div class="audio-control-row">
+            <span class="audio-label">Music:</span>
+            <button class="mute-btn" id="musicMuteBtn">🔊</button>
+            <input type="range" class="volume-slider" id="musicVolume" min="0" max="100" value="15">
         </div>
-        <button class="mute-toggle" id="muteToggle">🔇 Mute</button>
+        <div class="audio-control-row">
+            <span class="audio-label">SFX:</span>
+            <button class="mute-btn" id="sfxMuteBtn">🔊</button>
+            <input type="range" class="volume-slider" id="sfxVolume" min="0" max="100" value="30">
+        </div>
     </div>
 
     <!-- Welcome Screen -->
@@ -160,14 +167,6 @@
             
             <div style="display: flex; justify-content: center;">
                 <div class="game-board" id="gameBoard"></div>
-            </div>
-            
-            <div class="settings">
-                <label class="sound-toggle">
-                    <input type="checkbox" id="soundToggle" checked>
-                    <span>🔊 Sound Effects</span>
-                </label>
-                <button class="menu-btn" id="backToMenuGameBtn">📋 Menu</button>
             </div>
         </div>
     </div>
